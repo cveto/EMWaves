@@ -1,0 +1,111 @@
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script>
+ 	var n = 100;
+	var x = [], y = [], z = [];
+	var dt = 0.015; 
+
+	var time_seconds=60;										// 10 seconds displayed
+	var time_resolution = 10;								// 100 points sampling rate per second
+	var t_axis_total_points=time_seconds*time_resolution;	// Total number of points on the graph
+	
+	var distance_units=10;									// For graph 2
+	var distance_resolution=100;							// For graph 2
+	var x_axis_total_points=distance_units*distance_resolution;		
+
+	var time_passed=0;
+	var plot_info;
+	var arr_wave1=[];
+
+
+	function firstLoad() {
+		plot_info=main();
+		place_canvas(plot_info[0],plot_info[1]);
+	};
+
+	function main() { 
+		// Array of time points
+		var arr_t_axis_points=[];		
+		for (var i=0;i<=t_axis_total_points;++i) arr_t_axis_points[i]=i;		// Array
+		
+		// Array of location points.. let's call them milimeters for now.. because radiowaves
+		var arr_x_axis_points=[];		
+		for (var i=0;i<=x_axis_total_points;++i) arr_x_axis_points[i]=i;		// Array
+
+		// WAVE 1 WAVE 1 WAVE 1 WAVE 1 WAVE 1 WAVE 1
+		// Array of points plot 1
+
+		var arr_wave1_length_sec=2;
+		var arr_wave1_freq = 1;					//Max 50 if sampling 100.
+		var arr_wave1_delay=0; 					//2*Math.PI;
+    
+		
+		// TIME WAVE
+		// A*cos(wt+fi)
+			var w=2*Math.PI*arr_wave1_freq;
+			var pfi=arr_wave1_delay;
+		for (i=0;i<=arr_wave1_length_sec*time_resolution;++i) {
+			var t=i/time_resolution;
+			arr_wave1[i]=Math.sin(w*t+pfi)
+		}
+		for (i=arr_wave1_length_sec*time_resolution+1;i<=time_seconds*time_resolution;++i) {
+			var t=i/time_resolution;
+			arr_wave1[i]=0;
+		}
+		
+		// ANIMATION - -PASSING TIME
+		move_zeros();
+
+		return[arr_t_axis_points,arr_wave1];
+	};
+	
+	function move_zeros()	{
+		var frames_passed=time_passed*time_resolution;
+		time_passed=time_passed+dt;  // <---------------
+		for (i=0;i<=frames_passed;++i) {
+			arr_wave1.splice(0,0,0);		// Moves array to right by adding zeros at the beginning
+		}
+	}
+	
+	function place_canvas(arr_t_axis_points,arr_wave1) {
+		Plotly.plot('graph', [{
+			x: arr_t_axis_points,
+			y: arr_wave1,
+			mode: 'lines'
+			//mode: 'markers'
+			}], {
+		xaxis: {range: [0, t_axis_total_points]},
+		yaxis: {range: [-1.2, 1.2]}
+		}, {showSendToCloud:true})
+	};
+
+	// Caled by updateFrame();
+	function update () {
+	
+		Plotly.animate('graph', {
+		data: [{x: plot_info[0], y: plot_info[1]}]
+		}, {
+		transition: {
+			duration: 1000,
+		},
+		frame: {
+			duration: 0,
+			redraw: false,
+		}
+		});
+		
+		updateFrame();
+	}
+	
+	function updateFrame() {
+		//plot_info=main();
+		move_zeros();
+		requestAnimationFrame(update);
+	}
+	
+  </script>
+</head>
+<body onLoad="firstLoad();">
+  <div id="graph"></div>
+  <button onclick="updateFrame();">Alles</button>
+</body>
