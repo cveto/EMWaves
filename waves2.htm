@@ -7,17 +7,21 @@ var yStart=100;
 var wtf=60;
 
 
-var resolution=100; // dots per period.. not the bestr, want 
-var lambda1=1;		// 5 cm
-var numPeriodsToDraw=10;
-var raylength=10;
+var resolution=20; 		// dots per period
+var lambda1=0.5;		// 5 cm
+var raylength=11;
+
+var numPeriodsToDraw=raylength/lambda1;
+
 
 var t=0;
 var yPrev=0;
 var w1=0.05;		
 var ctx;
-var Amp=20;
 
+var Amp=20;
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7]
+var wave1=[100,100,100,100,60,11,0.5,0.05]
 
 
 function init() {
@@ -26,7 +30,48 @@ function init() {
 	//draw();
 }
 
+function drawRay(wave,ctx) {
+
+	ctx.moveTo(xStart,yStart);				
+	rotateAround=[xStart,xStart];
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+
+	ctx.beginPath();
+	
+	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
+
+		var k1 = 2*Math.PI/resolution;
+		var dx=x*lambda1/resolution*50
+		var f1=yStart+Amp*Math.sin(k1*x-w1*t);		// Equation
+		ctx.lineTo(xStart+dx,f1);
+	}
+	
+
+	ctx.clearRect(0,0, 3000,3000);
+	yPrev=f1;
+	
+	ctx.stroke();
+	
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(-wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+}
+
 function draw() {
+	var c = document.getElementById("myCanvas");
+	var ctx = c.getContext("2d");
+	
+	drawRay(wave1,ctx);
+	
+	t+=1;
+	
+
+}
+
+
+function draw2() {
 	var c = document.getElementById("myCanvas");
 	var ctx = c.getContext("2d");
 	
@@ -39,8 +84,7 @@ function draw() {
 
 	ctx.beginPath();
 
-	//for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
-	for (var x=0;x<=raylength*resolution;++x) {
+	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
 
 		var k1 = 2*Math.PI/resolution;
 		var dx=x*lambda1/resolution*50
