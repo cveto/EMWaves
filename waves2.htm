@@ -2,26 +2,17 @@
 <html>
 
 <script>
-var xStart=100;
-var yStart=100;
-var wtf=60;
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8]
+var wave1=[30,30,30,30,45,11,0.5,0.008,20];		// By default 2 and 3 are set to 1 and 2
+var wave2=[419,419,100,100,45,11,1,0.008,20]		// by default 2 and 3 are ignored
 
-
-var resolution=20; 		// dots per period
-var lambda1=0.5;		// 5 cm
-var raylength=11;
-
-var numPeriodsToDraw=raylength/lambda1;
-
-
-var t=0;
-var yPrev=0;
-var w1=0.05;		
 var ctx;
+var resolution=20; 		// dots per period
+var t=0;
+var yPrev=5;
 
-var Amp=20;
-//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7]
-var wave1=[100,100,100,100,60,11,0.5,0.05]
+
+
 
 
 function init() {
@@ -31,14 +22,23 @@ function init() {
 }
 
 function drawRay(wave,ctx) {
+	var numPeriodsToDraw=wave[5]/wave[6];
+	var Amp=wave[8];
+	var angle=wave[4];
+	var xStart=wave[0];
+	var yStart=wave[1];
+	var lambda1=wave[6];
+	var w1=2*Math.PI*wave[7];
+	var rotatex = wave[0];
+	var rotatey = wave[1];
 
-	ctx.moveTo(xStart,yStart);				
-	rotateAround=[xStart,xStart];
-	ctx.translate(rotateAround[0],rotateAround[1]);
-	ctx.rotate(wtf * Math.PI / 180);
-	ctx.translate(-rotateAround[0],-rotateAround[1]);
+	// start drawing where?
+	ctx.moveTo(wave[0],wave[1]);	
 
-	ctx.beginPath();
+	// rotate arouund where?
+	ctx.translate(rotatex,rotatey);		
+	ctx.rotate(angle * Math.PI / 180);
+	ctx.translate(-rotatex,-rotatey);
 	
 	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
 
@@ -48,26 +48,31 @@ function drawRay(wave,ctx) {
 		ctx.lineTo(xStart+dx,f1);
 	}
 	
+	// Rotate K.O. back
+	ctx.translate(rotatex,rotatey);
+	ctx.rotate(-angle * Math.PI / 180);
+	ctx.translate(-rotatex,-rotatey);
+	
 
-	ctx.clearRect(0,0, 3000,3000);
-	yPrev=f1;
-	
-	ctx.stroke();
-	
-	ctx.translate(rotateAround[0],rotateAround[1]);
-	ctx.rotate(-wtf * Math.PI / 180);
-	ctx.translate(-rotateAround[0],-rotateAround[1]);
 }
 
 function draw() {
 	var c = document.getElementById("myCanvas");
 	var ctx = c.getContext("2d");
 	
+	ctx.beginPath();
+	
+	ctx.rect(30, 30, 1, 1);
 	drawRay(wave1,ctx);
+	drawRay(wave2,ctx);
+	
+	// Clear Image
+
+	ctx.clearRect(0,0, 3000,3000);
+
+	ctx.stroke();
 	
 	t+=1;
-	
-
 }
 
 
