@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<script>
+var xStart=100;
+var yStart=100;
+var wtf=60;
+
+
+var resolution=20; 		// dots per period
+var lambda1=0.5;		// 5 cm
+var raylength=11;
+
+var numPeriodsToDraw=raylength/lambda1;
+
+
+var t=0;
+var yPrev=0;
+var w1=0.05;		
+var ctx;
+
+var Amp=20;
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7]
+var wave1=[100,100,100,100,60,11,0.5,0.05]
+
+
+function init() {
+	ctx= myCanvas.getContext('2d');
+	setInterval(draw,1);	 				// 1 Calls function draw 40 times a...? Well often.	
+	//draw();
+}
+
+function drawRay(wave,ctx) {
+
+	ctx.moveTo(xStart,yStart);				
+	rotateAround=[xStart,xStart];
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+
+	ctx.beginPath();
+	
+	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
+
+		var k1 = 2*Math.PI/resolution;
+		var dx=x*lambda1/resolution*50
+		var f1=yStart+Amp*Math.sin(k1*x-w1*t);		// Equation
+		ctx.lineTo(xStart+dx,f1);
+	}
+	
+
+	ctx.clearRect(0,0, 3000,3000);
+	yPrev=f1;
+	
+	ctx.stroke();
+	
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(-wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+}
+
+function draw() {
+	var c = document.getElementById("myCanvas");
+	var ctx = c.getContext("2d");
+	
+	drawRay(wave1,ctx);
+	
+	t+=1;
+	
+
+}
+
+
+function draw2() {
+	var c = document.getElementById("myCanvas");
+	var ctx = c.getContext("2d");
+	
+
+	ctx.moveTo(xStart,yStart);				
+	rotateAround=[xStart,xStart];
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+
+	ctx.beginPath();
+
+	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
+
+		var k1 = 2*Math.PI/resolution;
+		var dx=x*lambda1/resolution*50
+		var f1=yStart+Amp*Math.sin(k1*x-w1*t);		// Equation
+		ctx.lineTo(xStart+dx,f1);
+	}
+	t+=1;
+	//ctx.arc(95,50,40,0,1*Math.PI);
+	ctx.clearRect(0,0, 3000,3000);
+	yPrev=f1;
+	
+	ctx.stroke();
+	
+	ctx.translate(rotateAround[0],rotateAround[1]);
+	ctx.rotate(-wtf * Math.PI / 180);
+	ctx.translate(-rotateAround[0],-rotateAround[1]);
+}
+
+function move_zeros()	{
+		arr_wave1.splice(0,0,0);		// Moves array to right by adding zeros at the beginning
+		arr_wave1.splice(-1,1)			// Deletes last one
+		document.getElementById("meh").innerHTML = arr_wave1;
+}	
+</script>
+
+<body onLoad="init();">
+
+<canvas id="myCanvas" width="3000" height="3000" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+
+
+</script> 
+
+</body>
+</html>
