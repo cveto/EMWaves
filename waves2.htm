@@ -2,14 +2,24 @@
 <html>
 
 <script>
-//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8]
-var wave1=[30,30,30,30,45,11,0.5,0.008,20];		// By default 2 and 3 are set to 1 and 2
-var wave2=[419,419,100,100,45,11,1,0.008,20]		// by default 2 and 3 are ignored
+var fgreen=565;		// THz 10^12
+var fred=442.5;		// THz 10^12
+var fblue=640;		// THz 10^12
+
+
+var c0=2.99792458			// *10^8 			300 000 000 m/s
+
+var n1=1;
+var n2=1.6;
+
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
+var wave1=[30,  30,  30,  30,  45, 11, "empty",   fgreen, 10,1];		// By default 2 and 3 are set to 1 and 2
+var wave2=[418, 418, 100, 100, 70, 11, "empty",   fblue,  10,1.6]		// by default 2 and 3 are ignored
 
 var ctx;
 var resolution=20; 		// dots per period
 var t=0;
-var yPrev=5;
+var yPrev=0;
 
 
 
@@ -22,15 +32,23 @@ function init() {
 }
 
 function drawRay(wave,ctx) {
-	var numPeriodsToDraw=wave[5]/wave[6];
-	var Amp=wave[8];
-	var angle=wave[4];
+	var fTHz=wave[7];
+	var fEHz=wave[7]/1000/1000;						// In EksaHerz
+	
+	var n=wave[9];
+
 	var xStart=wave[0];
 	var yStart=wave[1];
-	var lambda1=wave[6];
-	var w1=2*Math.PI*wave[7];
+	
+	var angle=wave[4];
+	var lambda1=c0/n/fTHz*100							// micrometers
+
+	var w1=2*Math.PI*fEHz;				//
+	var Amp=wave[8];
+
 	var rotatex = wave[0];
 	var rotatey = wave[1];
+	var numPeriodsToDraw=wave[5]/lambda1;
 
 	// start drawing where?
 	ctx.moveTo(wave[0],wave[1]);	
@@ -62,7 +80,7 @@ function draw() {
 	
 	ctx.beginPath();
 	
-	ctx.rect(30, 30, 1, 1);
+	ctx.rect(0, 415, 5000, 450);
 	drawRay(wave1,ctx);
 	drawRay(wave2,ctx);
 	
@@ -75,38 +93,6 @@ function draw() {
 	t+=1;
 }
 
-
-function draw2() {
-	var c = document.getElementById("myCanvas");
-	var ctx = c.getContext("2d");
-	
-
-	ctx.moveTo(xStart,yStart);				
-	rotateAround=[xStart,xStart];
-	ctx.translate(rotateAround[0],rotateAround[1]);
-	ctx.rotate(wtf * Math.PI / 180);
-	ctx.translate(-rotateAround[0],-rotateAround[1]);
-
-	ctx.beginPath();
-
-	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
-
-		var k1 = 2*Math.PI/resolution;
-		var dx=x*lambda1/resolution*50
-		var f1=yStart+Amp*Math.sin(k1*x-w1*t);		// Equation
-		ctx.lineTo(xStart+dx,f1);
-	}
-	t+=1;
-	//ctx.arc(95,50,40,0,1*Math.PI);
-	ctx.clearRect(0,0, 3000,3000);
-	yPrev=f1;
-	
-	ctx.stroke();
-	
-	ctx.translate(rotateAround[0],rotateAround[1]);
-	ctx.rotate(-wtf * Math.PI / 180);
-	ctx.translate(-rotateAround[0],-rotateAround[1]);
-}
 
 function move_zeros()	{
 		arr_wave1.splice(0,0,0);		// Moves array to right by adding zeros at the beginning
