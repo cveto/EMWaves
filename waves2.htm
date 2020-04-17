@@ -22,9 +22,9 @@ var t=0;
 var slowdown=20;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
 
 // WAVES
-//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
-var wave1=[30,  30,  30,  30,  60, 10, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
-var wave2=[418, 418, 100, 100, 80, 5, "empty",   ftest,  10,3]		// by default 2 and 3 are ignored
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,tilt4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
+var wave1=["empty",  "empty",  "empty",  "empty", "empty", 10, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
+var wave2=["empty", "empty", "empty", "empty", "empty", 5, "empty",   ftest,  10,1.6]		// by default 2 and 3 are ignored
 
 // MATERIALS
 var n1=1;
@@ -37,13 +37,13 @@ function init() {
 	//draw();
 }
 
-function drawRay(wave,ctx,xStart,yStart) {
+function drawRay(wave,ctx,xStart,yStart,tilt) {
 
 	// Pulled 
 	var fTHz=wave[7];				// f in TeraHerz 10^12
 	var fEHz=wave[7]/1000/1000;		// f in EksaHerz 10^18
 	var n=wave[9];					// refractive index of medium where the wave is
-	var angle=wave[4];				// Angle of wave
+	//var tilt=wave[4];				// Angle of wave
 	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
 	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
 	// Calculated
@@ -62,7 +62,7 @@ function drawRay(wave,ctx,xStart,yStart) {
 
 	// rotate arouund where?
 	ctx.translate(rotatex,rotatey);		
-	ctx.rotate(angle * Math.PI / 180);
+	ctx.rotate(tilt * Math.PI / 180);
 	ctx.translate(-rotatex,-rotatey);
 	
 	// Calculated
@@ -78,9 +78,9 @@ function drawRay(wave,ctx,xStart,yStart) {
 		//ctx.lineTo(xStart+x,yStart+f1);			// Connets lines
 		ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
 		
-		if(f1<-Amp*(0.999)){							// Detecting peak.. one way of doing it
-			ctx.rect(xStart+mmppx,yStart+100,0.5,50);
-			};
+		//if(f1<-Amp*(0.999)){							// Detecting peak.. one way of doing it
+		//	ctx.rect(xStart+mmppx,yStart+100,0.5,50);
+		//	};
 
 		//if(t%sampling==i){							// Detecting peak.. one way of doing it
 		//	for (var j=0;j<numPeriodsToDraw;j++) {
@@ -92,7 +92,7 @@ function drawRay(wave,ctx,xStart,yStart) {
 
 	// Rotate K.O. back
 	ctx.translate(rotatex,rotatey);
-	ctx.rotate(-angle * Math.PI / 180);
+	ctx.rotate(-tilt * Math.PI / 180);
 	ctx.translate(-rotatex,-rotatey);	
 }
 
@@ -102,25 +102,32 @@ function draw() {
 	
 	ctx.beginPath();
 	
-	ctx.rect(30, 10, 51, 0);		// Rectangle
-	ctx.rect(0, 418, 5000, 450);		// Rectangle
+	ctx.rect(30, 10, 51, 0);		// Recttilt
+	ctx.rect(0, 418, 5000, 450);		// Recttilt
 	
-	drawRay(wave1,ctx,30,30);
 	
-	var xEndWave1 = wave1[0]+wave1[5]*DPmm*Math.cos(wave1[4]*Math.PI/180);
-	var yEndWave1 = wave1[0]+wave1[5]*DPmm*Math.sin(wave1[4]*Math.PI/180);
-	drawRay(wave2,ctx,xEndWave1,yEndWave1);
+	// item: Wave 1
+	var xStart=50;
+	var yStart=30;
+	var tilt=60;
+	drawRay(wave1,ctx,xStart,yStart,tilt);
+	var xEndWave1 = xStart+wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
+	var yEndWave1 = yStart+wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
+	
+	// item: Wave 2
+	var tilt=80;
+	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt);
 
+	// item: WALL
 	ctx.moveTo(wall1[0],wall1[1]);	
 	ctx.lineTo(wall1[2],wall1[3]);
 	
 	// Clear Image
-
 	ctx.clearRect(0,0, 3000,3000);
-
 	ctx.stroke();
 	
-	t+=1;
+	// Time goes forward?
+	t+=+1;
 }
 
 </script>
