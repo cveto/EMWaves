@@ -2,68 +2,83 @@
 <html>
 
 <script>
-var fgreen=565;		// THz 10^12
-var fred=442.5;		// THz 10^12
-var fblue=640;		// THz 10^12
+// CONSTANTS
+var c0=2.99792458	// *10^8	speed of light in vacuum
+
+var fgreen=565;		// THz 10^12	green color median frequency
+var fred=442.5;		// THz 10^12	red   color median frequency
+var fblue=640;		// THz 10^12	blue  color median frequency
+
+var ftest2=299.792458;	// freqency at which wavelength exzactly 1 micrometer.
+
+var ftest=299.792458;
 
 
-var c0=2.99792458			// *10^8 			300 000 000 m/s
+// CANVAS PRESENTATION VARIABLES
+var ctx;
+var sampling=20; 		// SAMPLES PER PERIOD
+var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
+var t=0;
+var slowdown=15;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
 
+// WAVES
+//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
+var wave1=[30,  30,  30,  30,  0, 1, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
+var wave2=[418, 418, 100, 100, 70, 11, "empty",   fblue,  10,3]		// by default 2 and 3 are ignored
+
+// MATERIALS
 var n1=1;
 var n2=1.6;
-
-//  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
-var wave1=[30,  30,  30,  30,  45, 11, "empty",   fgreen, 10,1];		// By default 2 and 3 are set to 1 and 2
-var wave2=[418, 418, 100, 100, 70, 11, "empty",   fblue,  10,1.6]		// by default 2 and 3 are ignored
-
-var ctx;
-var resolution=20; 		// dots per period
-var t=0;
-var yPrev=0;
-
-
-
-
+var wall1=[418,118,430,1000];
 
 function init() {
-	ctx= myCanvas.getContext('2d');
-	setInterval(draw,1);	 				// 1 Calls function draw 40 times a...? Well often.	
-	//draw();
+	//ctx= myCanvas.getContext('2d');
+	setInterval(draw,10);	 				// 1 Calls function draw 40 times a...? Well often.	
+	draw();
 }
 
-function drawRay(wave,ctx) {
-	var fTHz=wave[7];
-	var fEHz=wave[7]/1000/1000;						// In EksaHerz
+function drawRay(wave,ctx,xStart,yStart) {
+
+	// Pulled 
+	var fTHz=wave[7];				// f in TeraHerz 10^12
+	var fEHz=wave[7]/1000/1000;		// f in EksaHerz 10^18
+	var n=wave[9];					// refractive index of medium where the wave is
+	var angle=wave[4];				// Angle of wave
+	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
+	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
+	// Calculated
+	var lambda1=c0/n/fTHz*100		// wavelenght of ray in micrometers
+
+	var w1=2*Math.PI*fEHz;			// Angular speed in rad/(10^18s)
+
+	var rotatex = xStart;			// By default the rotation is around the starting point of the wave
+	var rotatey = yStart;
 	
-	var n=wave[9];
-
-	var xStart=wave[0];
-	var yStart=wave[1];
+	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
+	//var numPeriodsToDraw=2;
+	document.getElementById("test1").innerHTML=lambda1;
 	
-	var angle=wave[4];
-	var lambda1=c0/n/fTHz*100							// micrometers
-
-	var w1=2*Math.PI*fEHz;				//
-	var Amp=wave[8];
-
-	var rotatex = wave[0];
-	var rotatey = wave[1];
-	var numPeriodsToDraw=wave[5]/lambda1;
-
 	// start drawing where?
-	ctx.moveTo(wave[0],wave[1]);	
+	ctx.moveTo(xStart,yStart);	
 
 	// rotate arouund where?
 	ctx.translate(rotatex,rotatey);		
 	ctx.rotate(angle * Math.PI / 180);
 	ctx.translate(-rotatex,-rotatey);
 	
-	for (var x=0;x<=numPeriodsToDraw*resolution;++x) {
+	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {			// All is relative to wavelenght
+	
+		var k1 = 2*Math.PI/lambda1;				// Wavenumber in 1/m
+		
+		var x=i*lambda1/sampling;				// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
+		var mmppx=x*DPmm							// StretchFactor (How many pixels represents a micrometer of a wavelenght
 
-		var k1 = 2*Math.PI/resolution;
-		var dx=x*lambda1/resolution*50
-		var f1=yStart+Amp*Math.sin(k1*x-w1*t);		// Equation
-		ctx.lineTo(xStart+dx,f1);
+		var tslow=t*slowdown;		
+		
+		var f1=Amp*Math.sin(k1*x-w1*tslow);		// MainEquation
+		
+		//ctx.lineTo(xStart+x,yStart+f1);
+		ctx.rect(xStart+mmppx,yStart+f1, 1, 1);
 	}
 	
 	// Rotate K.O. back
@@ -80,9 +95,13 @@ function draw() {
 	
 	ctx.beginPath();
 	
-	ctx.rect(0, 415, 5000, 450);
-	drawRay(wave1,ctx);
-	drawRay(wave2,ctx);
+	ctx.rect(30, 10, 51, 0);		// Rectangle
+	ctx.rect(0, 418, 5000, 450);		// Rectangle
+	drawRay(wave1,ctx,30,30);
+	//drawRay(wave2,ctx,30+wave1[5],30+wave1[5]);
+
+	ctx.moveTo(wall1[0],wall1[1]);	
+	ctx.lineTo(wall1[2],wall1[3]);
 	
 	// Clear Image
 
@@ -93,24 +112,13 @@ function draw() {
 	t+=1;
 }
 
-
-function move_zeros()	{
-		arr_wave1.splice(0,0,0);		// Moves array to right by adding zeros at the beginning
-		arr_wave1.splice(-1,1)			// Deletes last one
-		document.getElementById("meh").innerHTML = arr_wave1;
-}	
 </script>
 
 <body onLoad="init();">
-
+<p>Test: <div id="test1">ready</div></p>
 <canvas id="myCanvas" width="3000" height="3000" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
 
-<script>
-
-
-
-</script> 
 
 </body>
 </html>
