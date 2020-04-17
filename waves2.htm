@@ -16,15 +16,15 @@ var ftest=299.792458;
 
 // CANVAS PRESENTATION VARIABLES
 var ctx;
-var sampling=20; 		// SAMPLES PER PERIOD
+var sampling=200; 		// SAMPLES PER PERIOD
 var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
 var t=0;
-var slowdown=15;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
+var slowdown=20;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
 
 // WAVES
 //  wave1[xstart0,ystart1,xrotate2,yrotate3,angle4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
-var wave1=[30,  30,  30,  30,  0, 1, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
-var wave2=[418, 418, 100, 100, 70, 11, "empty",   fblue,  10,3]		// by default 2 and 3 are ignored
+var wave1=[30,  30,  30,  30,  60, 10, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
+var wave2=[418, 418, 100, 100, 80, 5, "empty",   ftest,  10,3]		// by default 2 and 3 are ignored
 
 // MATERIALS
 var n1=1;
@@ -34,7 +34,7 @@ var wall1=[418,118,430,1000];
 function init() {
 	//ctx= myCanvas.getContext('2d');
 	setInterval(draw,10);	 				// 1 Calls function draw 40 times a...? Well often.	
-	draw();
+	//draw();
 }
 
 function drawRay(wave,ctx,xStart,yStart) {
@@ -56,7 +56,6 @@ function drawRay(wave,ctx,xStart,yStart) {
 	
 	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
 	//var numPeriodsToDraw=2;
-	document.getElementById("test1").innerHTML=lambda1;
 	
 	// start drawing where?
 	ctx.moveTo(xStart,yStart);	
@@ -66,27 +65,35 @@ function drawRay(wave,ctx,xStart,yStart) {
 	ctx.rotate(angle * Math.PI / 180);
 	ctx.translate(-rotatex,-rotatey);
 	
+	// Calculated
+	var k1 = 2*Math.PI/lambda1;				// Wavenumber in 1/m
+	var tslow=t*slowdown;	
+
 	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {			// All is relative to wavelenght
 	
-		var k1 = 2*Math.PI/lambda1;				// Wavenumber in 1/m
-		
 		var x=i*lambda1/sampling;				// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
 		var mmppx=x*DPmm							// StretchFactor (How many pixels represents a micrometer of a wavelenght
+		var f1=Amp*Math.sin(k1*x-w1*tslow);		// MAIN EQUATION
+		
+		//ctx.lineTo(xStart+x,yStart+f1);			// Connets lines
+		ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+		
+		if(f1<-Amp*(0.999)){							// Detecting peak.. one way of doing it
+			ctx.rect(xStart+mmppx,yStart+100,0.5,50);
+			};
 
-		var tslow=t*slowdown;		
-		
-		var f1=Amp*Math.sin(k1*x-w1*tslow);		// MainEquation
-		
-		//ctx.lineTo(xStart+x,yStart+f1);
-		ctx.rect(xStart+mmppx,yStart+f1, 1, 1);
+		//if(t%sampling==i){							// Detecting peak.. one way of doing it
+		//	for (var j=0;j<numPeriodsToDraw;j++) {
+		//		ctx.rect(xStart+j*DPmm+mmppx,yStart,0.5,50);
+		//		
+		//	}
+		//};	
 	}
-	
+
 	// Rotate K.O. back
 	ctx.translate(rotatex,rotatey);
 	ctx.rotate(-angle * Math.PI / 180);
-	ctx.translate(-rotatex,-rotatey);
-	
-
+	ctx.translate(-rotatex,-rotatey);	
 }
 
 function draw() {
@@ -97,8 +104,12 @@ function draw() {
 	
 	ctx.rect(30, 10, 51, 0);		// Rectangle
 	ctx.rect(0, 418, 5000, 450);		// Rectangle
+	
 	drawRay(wave1,ctx,30,30);
-	//drawRay(wave2,ctx,30+wave1[5],30+wave1[5]);
+	
+	var xEndWave1 = wave1[0]+wave1[5]*DPmm*Math.cos(wave1[4]*Math.PI/180);
+	var yEndWave1 = wave1[0]+wave1[5]*DPmm*Math.sin(wave1[4]*Math.PI/180);
+	drawRay(wave2,ctx,xEndWave1,yEndWave1);
 
 	ctx.moveTo(wall1[0],wall1[1]);	
 	ctx.lineTo(wall1[2],wall1[3]);
