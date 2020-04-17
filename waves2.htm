@@ -10,7 +10,6 @@ var fred=442.5;		// THz 10^12	red   color median frequency
 var fblue=640;		// THz 10^12	blue  color median frequency
 
 var ftest2=299.792458;	// freqency at which wavelength exzactly 1 micrometer.
-
 var ftest=299.792458;
 
 
@@ -20,10 +19,13 @@ var sampling=200; 		// SAMPLES PER PERIOD
 var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
 var t=0;
 var slowdown=20;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
+var xCenter1=350;
+var yCenter1=350;
+
 
 // WAVES
 //  wave1[xstart0,ystart1,xrotate2,yrotate3,tilt4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
-var wave1=["empty",  "empty",  "empty",  "empty", "empty", 10, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
+var wave1=["empty",  "empty",  "empty",  "empty", "empty", 5, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
 var wave2=["empty", "empty", "empty", "empty", "empty", 5, "empty",   ftest,  10,1.6]		// by default 2 and 3 are ignored
 
 // MATERIALS
@@ -43,7 +45,6 @@ function drawRay(wave,ctx,xStart,yStart,tilt) {
 	var fTHz=wave[7];				// f in TeraHerz 10^12
 	var fEHz=wave[7]/1000/1000;		// f in EksaHerz 10^18
 	var n=wave[9];					// refractive index of medium where the wave is
-	//var tilt=wave[4];				// Angle of wave
 	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
 	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
 	// Calculated
@@ -102,25 +103,32 @@ function draw() {
 	
 	ctx.beginPath();
 	
-	ctx.rect(30, 10, 51, 0);		// Recttilt
-	ctx.rect(0, 418, 5000, 450);		// Recttilt
-	
+	ctx.rect(30, 10, DPmm, 2);			// 1 micrometer
+	ctx.rect(0, 350, 5000, 2);			// Horizontal Line
+	ctx.rect(350, 0, 2,5000);
 	
 	// item: Wave 1
-	var xStart=50;
-	var yStart=30;
-	var tilt=60;
+	var n1=1;
+	var theta1=30							// Angle from vertical middle line
+	var tilt=90-theta1;						// Angle from horizontal line... because Javascript
+	var thetaRad=Math.PI/180*(theta1);		// Theta in radians
+	var xStart=xCenter1-wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
+	var yStart=yCenter1-wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
+
 	drawRay(wave1,ctx,xStart,yStart,tilt);
 	var xEndWave1 = xStart+wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
 	var yEndWave1 = yStart+wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
 	
 	// item: Wave 2
-	var tilt=80;
-	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt);
+	var n2=2;
+	var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);		// Sneels Law
+	var tilt2=90-theta2rad*180/Math.PI;
+	document.getElementById("test1").innerHTML=theta2rad*180/Math.PI;
+	document.getElementById("test1").innerHTML=tilt2;
 
-	// item: WALL
-	ctx.moveTo(wall1[0],wall1[1]);	
-	ctx.lineTo(wall1[2],wall1[3]);
+
+	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2);
+
 	
 	// Clear Image
 	ctx.clearRect(0,0, 3000,3000);
