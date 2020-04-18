@@ -23,7 +23,7 @@ var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
 
 var t=0;
 var tslow;
-var intervalms=10;		// values will be calculated for every 10 miliseconds  - time resolution
+var intervalms=010;		// 10 values will be calculated for every 10 miliseconds  - time resolution
 
 var xCenter1=350;
 var yCenter1=350;
@@ -36,8 +36,8 @@ var wave1=["empty",  "empty",  "empty",  "empty", "empty", 5, "empty",   ftest, 
 var wave2=["empty", "empty", "empty", "empty", "empty", 5, "empty",   ftest,  Amp,1.6]		// by default 2 and 3 are ignored
 
 // MATERIALS
-var n1=1;
-var n2=1.6;
+var n1;
+var n2;
 var wall1=[418,118,430,1000];
 
 function init() {
@@ -46,25 +46,36 @@ function init() {
 	//draw();
 }
 
-function calcalte_wavelength(fTHz,n) {	// Takes n and f in Thz
+function calculate_wavelenght(fTHz,n) {	// Takes n and f in Thz
 	var c0=2.99792458;						// * 10^8 meters/sec
 	var lambda_micrometers=c0/n/fTHz*100;		// in mirometers
 	return lambda_micrometers;
 }
 
-function calculate_border_phase(distance_travelled,lambda) {
-	var phase=((distance_travelled/lambda)-Math.floor(distance_travelled/lambda));
+function calculate_border_phase(distance_travelled,lambda) {	
+
+	// What is the wavelenght of the wave?					2.0 um
+	// lambda
+
+	// What is the distance travelled in micrometers?  		6.8 um
+	// distance_travelled.			
+
+	// How many lambdas fit in to the distance traveled?	3.4
+	var hmlfittd = distance_travelled/lambda;
 	
-	document.getElementById("test2").innerHTML=lambda;
+	// How many whole lambdas fit in to this distance?		3
+	var hmlfittd_whole=Math.floor(hmlfittd);
 	
-	//phase=phase*lambda/2/Math.PI;
-	//document.getElementById("test1").innerHTML=lambda;
-	var phase=-0.3*Math.PI
+	// And the difference that doesnt fit is??				0.4 of a lambda
+	var hmlfittd_left=hmlfittd-hmlfittd_whole;
+	
+	// And in radians, how much is that?					0.4*2PI
+	var phase = hmlfittd_left*2*Math.PI;			// This should not exceed 2PI.. but it does
+
 	return phase;
-	// -0.938418 at 171THz
 }
 
-function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift) {
+function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 
 	// Pulled 
 	var fTHz=wave[7];				// f in TeraHerz 10^12
@@ -72,8 +83,7 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift) {
 	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
 	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
 	// Calculated
-	var n=wave[9];					// refractive index of medium where the wave is
-	var lambda1=calcalte_wavelength(fTHz,n);
+	var lambda1=calculate_wavelenght(fTHz,n);
 	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
 	//var numPeriodsToDraw=Math.floor(numPeriodsToDraw);  // Rounding so I can continue my second wave from same phase
 
@@ -106,20 +116,13 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift) {
 		//--------------------
 		
 		if(document.getElementById("markWaves").checked == '1'){	
-			//ctx.lineTo(xStart+x,yStart+f1);			// Connets lines
-			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+			ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
 		}
 		
-		if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == '1'){							// Detecting peak.. one way of doing it
+		if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
 			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
 			};
-
-		//if(t%sampling==i){							// Detecting peak.. one way of doing it
-		//	for (var j=0;j<numPeriodsToDraw;j++) {
-		//		ctx.rect(xStart+j*DPmm+mmppx,yStart,0.5,50);
-		//		
-		//	}
-		//};	
 	}
 
 	// Rotate K.O. back
@@ -154,10 +157,12 @@ function draw() {
 
 	var tilt=90-theta1;						// Angle from horizontal line... because Javascript
 	var thetaRad=Math.PI/180*(theta1);		// Theta in radians
+	
+	// Strating point of second wave is the ending point of first wave.
 	var xStart=xCenter1-wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
 	var yStart=yCenter1-wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
 
-	drawRay(wave1,ctx,xStart,yStart,tilt,0);
+	drawRay(wave1,ctx,xStart,yStart,tilt,0,n1);
 	
 
 	////////////////
@@ -187,10 +192,10 @@ function draw() {
 		//wave2_phase-=Math.PI/2
 	} 
 	
-	wave2_phase+=calculate_border_phase(wave1[5],calcalte_wavelength(wave1[7],n1));
-	document.getElementById("test1").innerHTML=wave2_phase;
+	var deleteme=calculate_wavelenght(wave1[7],n1);
+	wave2_phase=calculate_border_phase(wave1[5],deleteme);
 	
-	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase);
+	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2);
 	
 	
 	// Clear Image
@@ -220,16 +225,16 @@ function pause_time() {
 </script>
 
 <body onLoad="init();">
-TEST:<span id="test1">ready</span></br>
-TEST2 faza:<span id="test2">ready</span></br></br>
-FREQUENCY: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="2000" value="299.7"> <br/>
-THETA1: <span id="value_theta1"></span><input type="range" id="theta1" min="0" max="90" value="90"> <br/>
-SPEED: x<span id="value_speed"></span> <input type="range" id="timespeed" min="0" max="80" value="1"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
+A:<span id="test1">ready</span></br>
+B:<span id="test2">ready</span></br></br>
+FREQUENCY: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="2000" value="260"> <br/>
+THETA1: <span id="value_theta1"></span><input type="range" id="theta1" min="0" max="90" value="30"> <br/>
+SPEED: x<span id="value_speed"></span> <input type="range" id="timespeed" min="0" max="80" value="20"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
 n1: <input type="range" id="range_n1" min="0" max="300" value="100"><span id="value_n1"></span></br>
-n2: <input type="range" id="range_n2" min="0" max="300" value="100"><span id="value_n2"></span></br>
+n2: <input type="range" id="range_n2" min="0" max="300" value="160"><span id="value_n2"></span></br>
 
 TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span><br />
-Snakes: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="0"> | 
+Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="false"> | 
 GRAY LINE is 1 micrometer
 <canvas id="myCanvas" width="3000" height="3000" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
