@@ -15,13 +15,13 @@ var Amp = 20;		// Just to make it look presentable on the canvas.
 
 // CANVAS PRESENTATION VARIABLES
 var ctx;
-var sampling=200; 		// SAMPLES PER PERIOD
+var sampling=50; 		// SAMPLES PER PERIOD
 var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
 
 // TIME: t Ntime*delta_t.
 var t=0;							// time in attoseconds
 var Ntime=0;						
-var delta_t_min=25;						// DO NOT CHANGE THIS - modify slowdown_factor instead.
+var delta_t_min=10;						// DO NOT CHANGE THIS - modify slowdown_factor instead.
 									// TIME SAMPLING RATE OF SIGNAL, HOW MUCH REAL TIME HAS PASED BETWEEN 2 SNAPSHOTS?
 									// e.g. at 300THZ, it takes the signal 3 femtoseconds to  travel the distance of 1 wavelength	
 									// We want to see the signal traveling smoothly, so we set this to about 1/100th or however much computer lets us.
@@ -98,6 +98,7 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 
 	// Pulled 
 	var fTHz=wave[7];							// f in TeraHerz 10^12
+	var taas=1/fTHz*1000000;					// Time of one period in attoseconds
 	var raylength = wave[5];					// length of wave in micrometers in the direction of movement for presentation purposes)
 	var Amp=wave[8];							// Wave Amplitude - has no meaning, just to make it nice on the canvas
 	
@@ -125,28 +126,38 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 	// Calculated
 	var k1 = 2*Math.PI/lambda1;							// Wavenumber in 1/micrometers
 
-	travelwaveI+=0.8;
-	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {	// All is relative to wavelenght
+	travelwaveI+=0.6
+	
+
+	
+
+	
+	// THIS SIMULATES HOW WAVE IS APPROACHING TO THE SUFACE.
+	if (t<=taas*numPeriodsToDraw)	{
+		var how_many_samples=sampling*t*fTHz/1000000;
+	} else {
+		var how_many_samples=sampling*numPeriodsToDraw;
+	}
+	
+	
+	for (var i=0;i<=how_many_samples;++i) {	// All is relative to wavelenght
 	
 		var x=i*lambda1/sampling;						// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
 		var mmppx=x*DPmm								// StretchFactor (How many pixels represents a micrometer of a wavelenght
 		
 		//--------------------
-		//var f1=Amp*Math.sin(k1*x-w1*tslow+phaseShift);				// MAIN EQUATION
 		var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);		//
-
 		//--------------------
 		
-	//	if (tslow<=3846 && i<=sampling) {		// Only draw with the speed of the wave at the beginning..speed of the sample change of the front?
-			if(document.getElementById("markWaves").checked == '1'){	
-				ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
-				//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-			}
-			
-			if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == false){							// Detecting peak.. one way of doing it
-				ctx.rect(xStart+mmppx,yStart-25,0.5,50);
-			}
-	//	}
+		// Make the wave look like it's travelling from 0 without modifying the quation
+		if(document.getElementById("markWaves").checked == '1'){	
+			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+			//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+		}
+		
+		if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == false){							// Detecting peak.. one way of doing it
+			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
+		}
 	}
 
 	// Rotate K.O. back
@@ -157,9 +168,14 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 
 function draw() {
 
-
 	var c = document.getElementById("myCanvas");
 	var ctx = c.getContext("2d");
+
+	// TIME INFO
+	// Time goes forward or backwards?
+	slowdown_factor=document.getElementById("range_speed").value;
+	delta_t=delta_t_min*slowdown_factor;
+	document.getElementById("value_speed").innerHTML=slowdown_factor;
 
 	ctx.beginPath();
 	
@@ -227,11 +243,7 @@ function draw() {
 	// Clear Image
 	ctx.clearRect(0,0, 3000,3000);
 	ctx.stroke();
-	
-	// Time goes forward or backwards?
-	slowdown_factor=document.getElementById("range_speed").value;
-	delta_t=delta_t_min*slowdown_factor;
-	document.getElementById("value_speed").innerHTML=slowdown_factor;
+
 
 	// Time is actually flowing?
 	if (document.getElementById("button_pause").value==1) 	{
@@ -257,10 +269,14 @@ function pause_time() {
 		timer2=t;
 		var time_passed=(timer2-timer1)/1000;
 		
-		document.getElementById("value_timer").innerHTML=time_passed;
+		document.getElementById("value_timer").innerHTML=Math.floor(time_passed*1000)/1000;
 	}
 }
 
+function reset_time() {
+	t=0;
+	Ntime=0;
+}
 </script>
 
 <body onLoad="init();">
@@ -268,9 +284,10 @@ A:<span id="test1">ready</span></br>
 B:<span id="test2">ready</span></br></br>
 <div id="test3" value=10></div>
 
+<button id="button_reset" onclick="reset_time()">RESET TIME</button><br />
 FREQUENCY: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="2000" value="260"> <br/>
 THETA1: <span id="value_theta1"></span><input type="range" id="theta1" min="0" max="90" value="30"> <br/>
-SPEED: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="20" value="8"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
+SPEED: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="40" value="2"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
 n1: <input type="range" id="range_n1" min="0" max="300" value="100"><span id="value_n1"></span></br>
 n2: <input type="range" id="range_n2" min="0" max="300" value="160"><span id="value_n2"></span></br>
 
