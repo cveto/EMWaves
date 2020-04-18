@@ -12,21 +12,28 @@ var fblue=640;		// THz 10^12	blue  color median frequency
 var ftest2=299.792458;	// freqency at which wavelength exzactly 1 micrometer.
 var ftest=299.792458;
 
+var Amp = 20;
+var slowdown;
 
 // CANVAS PRESENTATION VARIABLES
 var ctx;
 var sampling=200; 		// SAMPLES PER PERIOD
 var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
+
+
 var t=0;
-var slowdown=20;			// How many times are we slowing down time... Not accurate because computer takes time to calculate all this.
+var tslow;
+var intervalms=10;		// values will be calculated for every 10 miliseconds  - time resolution
+
 var xCenter1=350;
 var yCenter1=350;
 
 
 // WAVES
+
 //  wave1[xstart0,ystart1,xrotate2,yrotate3,tilt4,raylength5,wavelength6,frequency7,Amplitude8,refractiveIndex9]
-var wave1=["empty",  "empty",  "empty",  "empty", "empty", 5, "empty",   ftest, 10,1];		// By default 2 and 3 are set to 1 and 2
-var wave2=["empty", "empty", "empty", "empty", "empty", 5, "empty",   ftest,  10,1.6]		// by default 2 and 3 are ignored
+var wave1=["empty",  "empty",  "empty",  "empty", "empty", 5, "empty",   ftest, Amp,1];		// By default 2 and 3 are set to 1 and 2
+var wave2=["empty", "empty", "empty", "empty", "empty", 5, "empty",   ftest,  Amp,1.6]		// by default 2 and 3 are ignored
 
 // MATERIALS
 var n1=1;
@@ -35,53 +42,77 @@ var wall1=[418,118,430,1000];
 
 function init() {
 	//ctx= myCanvas.getContext('2d');
-	setInterval(draw,10);	 				// 1 Calls function draw 40 times a...? Well often.	
+	setInterval(draw,intervalms);	 				// 10 milisecond - 100 per second
 	//draw();
 }
 
-function drawRay(wave,ctx,xStart,yStart,tilt) {
+function calcalte_wavelength(fTHz,n) {	// Takes n and f in Thz
+	var c0=2.99792458;						// * 10^8 meters/sec
+	var lambda_micrometers=c0/n/fTHz*100;		// in mirometers
+	return lambda_micrometers;
+}
+
+function calculate_border_phase(distance_travelled,lambda) {
+	var phase=((distance_travelled/lambda)-Math.floor(distance_travelled/lambda));
+	
+	document.getElementById("test2").innerHTML=lambda;
+	
+	//phase=phase*lambda/2/Math.PI;
+	//document.getElementById("test1").innerHTML=lambda;
+	var phase=-0.3*Math.PI
+	return phase;
+	// -0.938418 at 171THz
+}
+
+function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift) {
 
 	// Pulled 
 	var fTHz=wave[7];				// f in TeraHerz 10^12
 	var fEHz=wave[7]/1000/1000;		// f in EksaHerz 10^18
-	var n=wave[9];					// refractive index of medium where the wave is
 	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
 	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
 	// Calculated
-	var lambda1=c0/n/fTHz*100		// wavelenght of ray in micrometers
+	var n=wave[9];					// refractive index of medium where the wave is
+	var lambda1=calcalte_wavelength(fTHz,n);
+	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
+	//var numPeriodsToDraw=Math.floor(numPeriodsToDraw);  // Rounding so I can continue my second wave from same phase
+
 
 	var w1=2*Math.PI*fEHz;			// Angular speed in rad/(10^18s)
 
 	var rotatex = xStart;			// By default the rotation is around the starting point of the wave
 	var rotatey = yStart;
 	
-	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
-	//var numPeriodsToDraw=2;
-	
 	// start drawing where?
 	ctx.moveTo(xStart,yStart);	
 
-	// rotate arouund where?
+	// rotate around what point?
 	ctx.translate(rotatex,rotatey);		
 	ctx.rotate(tilt * Math.PI / 180);
 	ctx.translate(-rotatex,-rotatey);
 	
 	// Calculated
-	var k1 = 2*Math.PI/lambda1;				// Wavenumber in 1/m
-	var tslow=t*slowdown;	
+	var k1 = 2*Math.PI/lambda1;							// Wavenumber in 1/micrometers
 
-	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {			// All is relative to wavelenght
+
+			
+	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {	// All is relative to wavelenght
 	
-		var x=i*lambda1/sampling;				// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
-		var mmppx=x*DPmm							// StretchFactor (How many pixels represents a micrometer of a wavelenght
-		var f1=Amp*Math.sin(k1*x-w1*tslow);		// MAIN EQUATION
+		var x=i*lambda1/sampling;						// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
+		var mmppx=x*DPmm								// StretchFactor (How many pixels represents a micrometer of a wavelenght
 		
-		//ctx.lineTo(xStart+x,yStart+f1);			// Connets lines
-		ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+		//--------------------
+		var f1=Amp*Math.sin(k1*x-w1*tslow+phaseShift);		// MAIN EQUATION
+		//--------------------
 		
-		//if(f1<-Amp*(0.999)){							// Detecting peak.. one way of doing it
-		//	ctx.rect(xStart+mmppx,yStart+100,0.5,50);
-		//	};
+		if(document.getElementById("markWaves").checked == '1'){	
+			//ctx.lineTo(xStart+x,yStart+f1);			// Connets lines
+			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+		}
+		
+		if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == '1'){							// Detecting peak.. one way of doing it
+			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
+			};
 
 		//if(t%sampling==i){							// Detecting peak.. one way of doing it
 		//	for (var j=0;j<numPeriodsToDraw;j++) {
@@ -100,7 +131,7 @@ function drawRay(wave,ctx,xStart,yStart,tilt) {
 function draw() {
 	var c = document.getElementById("myCanvas");
 	var ctx = c.getContext("2d");
-	
+
 	ctx.beginPath();
 	
 	ctx.rect(30, 10, DPmm, 2);			// 1 micrometer
@@ -108,40 +139,98 @@ function draw() {
 	ctx.rect(350, 0, 2,5000);
 	
 	// item: Wave 1
+	// frequency
+	wave1[7]=document.getElementById("range_frequency1").value;
+	wave2[7]=wave1[7];
+	document.getElementById("value_frequency1").innerHTML=wave1[7];
+	
 	var n1=1;
-	var theta1=30							// Angle from vertical middle line
+	n1=document.getElementById("range_n1").value/100;
+	document.getElementById("value_n1").innerHTML=n1;
+	
+	var theta1=15;							// Angle from vertical middle line
+	theta1=document.getElementById("theta1").value;
+	document.getElementById("value_theta1").innerHTML=theta1;
+
 	var tilt=90-theta1;						// Angle from horizontal line... because Javascript
 	var thetaRad=Math.PI/180*(theta1);		// Theta in radians
 	var xStart=xCenter1-wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
 	var yStart=yCenter1-wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
 
-	drawRay(wave1,ctx,xStart,yStart,tilt);
+	drawRay(wave1,ctx,xStart,yStart,tilt,0);
+	
+
+	////////////////
+	// item: Wave 2
+	
+	// Where did Wave1 end, wave2 will continue from there
 	var xEndWave1 = xStart+wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
 	var yEndWave1 = yStart+wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
 	
-	// item: Wave 2
-	var n2=2;
+	// Material2 properties
+	var n2=1;
+	n2=document.getElementById("range_n2").value/100;
+	document.getElementById("value_n2").innerHTML=n2;
+	
+	
 	var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);		// Sneels Law
 	var tilt2=90-theta2rad*180/Math.PI;
-	document.getElementById("test1").innerHTML=theta2rad*180/Math.PI;
-	document.getElementById("test1").innerHTML=tilt2;
-
-
-	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2);
-
+	
+	// PHASE CALCULATION.. where does ray2 start and is the phase shifted for reflected wave?
+	// At what phase does ray2 start (where ray1 ends)
+	var wave2_phase=0;
+	
+	// Shift phase for total reflection
+	if (isNaN(theta2rad)) {				// Total reflection,Snells law 
+		theta2rad=thetaRad-Math.PI/2;
+		tilt2=theta2rad*180/Math.PI;
+		//wave2_phase-=Math.PI/2
+	} 
+	
+	wave2_phase+=calculate_border_phase(wave1[5],calcalte_wavelength(wave1[7],n1));
+	document.getElementById("test1").innerHTML=wave2_phase;
+	
+	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase);
+	
 	
 	// Clear Image
 	ctx.clearRect(0,0, 3000,3000);
 	ctx.stroke();
 	
-	// Time goes forward?
-	t+=+1;
+	// Time goes forward or backwards?
+	slowdown=document.getElementById("timespeed").value;
+	document.getElementById("value_speed").innerHTML=slowdown;
+	
+	// Time is actually flowing?
+	if (document.getElementById("button_pause").value==1) 	t+=1;
+	tslow=t*slowdown;	
+	document.getElementById("value_time").innerHTML=Math.floor(t/1000*slowdown*10)/10;
+}
+
+function pause_time() {
+	if (document.getElementById("button_pause").value==0) {
+		document.getElementById("button_pause").value=1;
+		document.getElementById("button_pause").innerHTML="PAUSE TIME"
+	} else {
+		document.getElementById("button_pause").value=0
+		document.getElementById("button_pause").innerHTML="UNPAUSE TIME"
+	}
 }
 
 </script>
 
 <body onLoad="init();">
-<p>Test: <div id="test1">ready</div></p>
+TEST:<span id="test1">ready</span></br>
+TEST2 faza:<span id="test2">ready</span></br></br>
+FREQUENCY: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="2000" value="299.7"> <br/>
+THETA1: <span id="value_theta1"></span><input type="range" id="theta1" min="0" max="90" value="90"> <br/>
+SPEED: x<span id="value_speed"></span> <input type="range" id="timespeed" min="0" max="80" value="1"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
+n1: <input type="range" id="range_n1" min="0" max="300" value="100"><span id="value_n1"></span></br>
+n2: <input type="range" id="range_n2" min="0" max="300" value="100"><span id="value_n2"></span></br>
+
+TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span><br />
+Snakes: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="0"> | 
+GRAY LINE is 1 micrometer
 <canvas id="myCanvas" width="3000" height="3000" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
 
