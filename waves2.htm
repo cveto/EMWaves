@@ -2,28 +2,39 @@
 <html>
 
 <script>
-// CONSTANTS
-var c0=2.99792458	// *10^8	speed of light in vacuum
 
-var fgreen=565;		// THz 10^12	green color median frequency
-var fred=442.5;		// THz 10^12	red   color median frequency
-var fblue=640;		// THz 10^12	blue  color median frequency
+// SOME VISIBLE LIGHT FREQUENCIES
+var fgreen=565;			// THz 10^12	green color median frequency
+var fred=442.5;			// THz 10^12	red   color median frequency
+var fblue=640;			// THz 10^12	blue  color median frequency
 
-var ftest2=299.792458;	// freqency at which wavelength exzactly 1 micrometer.
-var ftest=299.792458;
+var ftest=299.792458;	// freqency at which wavelength exzactly 1 micrometer and it lasts 3335.640952 attoseconds
 
-var Amp = 20;
-var slowdown;
+var Amp = 20;		// Just to make it look presentable on the canvas.
+
 
 // CANVAS PRESENTATION VARIABLES
 var ctx;
 var sampling=200; 		// SAMPLES PER PERIOD
 var DPmm=50;			// DOTS PER MICROMETER OF WAVELENGTH REPRESENTED ON SCREEN
 
+// TIME: t Ntime*delta_t.
+var t=0;							// time in attoseconds
+var Ntime=0;						
+var delta_t_min=25;						// DO NOT CHANGE THIS - modify slowdown_factor instead.
+									// TIME SAMPLING RATE OF SIGNAL, HOW MUCH REAL TIME HAS PASED BETWEEN 2 SNAPSHOTS?
+									// e.g. at 300THZ, it takes the signal 3 femtoseconds to  travel the distance of 1 wavelength	
+									// We want to see the signal traveling smoothly, so we set this to about 1/100th or however much computer lets us.
+									// This is independent of the material.
+									// To slow down the ray, we have to either 1: speed up animatino (can't do dynamically)
+									// So I change the time sampling rate by modifying delta_t. MAx should be 1500attoseconds (fastes)
 
-var t=0;
-var tslow;
-var intervalms=010;		// 10 values will be calculated for every 10 miliseconds  - time resolution
+var slowdown_factor;				// Slowing down wave is done by increasing sample time.
+var delta_t=delta_t_min*slowdown_factor;
+
+var intervalms=20;					// How often the canvas is refreshed - every XY miliseconds (10ms = 100HZ)
+									// GOING TO NEXT TIMESLOT EVERY XY MILISECONDS.
+
 
 var xCenter1=350;
 var yCenter1=350;
@@ -40,15 +51,23 @@ var n1;
 var n2;
 var wall1=[418,118,430,1000];
 
+// PLAYGROUND
+var timer1=0;
+var timer2=0;
+
+
+var travelwaveI=0;
+
 function init() {
-	//ctx= myCanvas.getContext('2d');
+	ctx= myCanvas.getContext('2d');
 	setInterval(draw,intervalms);	 				// 10 milisecond - 100 per second
 	//draw();
 }
 
 function calculate_wavelenght(fTHz,n) {	// Takes n and f in Thz
-	var c0=2.99792458;						// * 10^8 meters/sec
-	var lambda_micrometers=c0/n/fTHz*100;		// in mirometers
+	var c0mmpms=299792458							// meters per second == micrometers per microseconds
+	var lambda_micrometers=c0mmpms/n/fTHz/1000000;	// in micrometers
+	//var lambda_nanometers=c0mmpms/n/fTHz/1000;		// in nanometers
 	return lambda_micrometers;
 }
 
@@ -78,18 +97,20 @@ function calculate_border_phase(distance_travelled,lambda) {
 function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 
 	// Pulled 
-	var fTHz=wave[7];				// f in TeraHerz 10^12
-	var fEHz=wave[7]/1000/1000;		// f in EksaHerz 10^18
-	var raylength = wave[5];		// length of wave in micrometers in the direction of movement for presentation purposes)
-	var Amp=wave[8];				// Wave Amplitude - has no meaning, just to make it nice on the canvas
+	var fTHz=wave[7];							// f in TeraHerz 10^12
+	var raylength = wave[5];					// length of wave in micrometers in the direction of movement for presentation purposes)
+	var Amp=wave[8];							// Wave Amplitude - has no meaning, just to make it nice on the canvas
+	
 	// Calculated
-	var lambda1=calculate_wavelenght(fTHz,n);
-	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the ray. But can be overwriten
-	//var numPeriodsToDraw=Math.floor(numPeriodsToDraw);  // Rounding so I can continue my second wave from same phase
-
-
-	var w1=2*Math.PI*fEHz;			// Angular speed in rad/(10^18s)
-
+	var lambda1=calculate_wavelenght(fTHz,n);	// get vavelenght in micrometers
+	var numPeriodsToDraw=raylength/lambda1;		// depends on the length of the distance traveled
+	
+	// TIME TIME TIME
+	//var w1=2*Math.PI*fTHz/1000000;				// Angular speed in rad/(10^18s) = rad/microsecond
+	var w11=2*Math.PI*fTHz*1000000000000;			// Angular speed in rad/s
+	var w11=2*Math.PI*fTHz/Math.pow(10,6);			// Angular speed in rad/attoseconds		
+	
+	
 	var rotatex = xStart;			// By default the rotation is around the starting point of the wave
 	var rotatey = yStart;
 	
@@ -104,25 +125,28 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 	// Calculated
 	var k1 = 2*Math.PI/lambda1;							// Wavenumber in 1/micrometers
 
-
-			
+	travelwaveI+=0.8;
 	for (var i=0;i<=numPeriodsToDraw*sampling;++i) {	// All is relative to wavelenght
 	
 		var x=i*lambda1/sampling;						// One wavelenght divided in XY samples, x is width between samples and depends on the wavelength.
 		var mmppx=x*DPmm								// StretchFactor (How many pixels represents a micrometer of a wavelenght
 		
 		//--------------------
-		var f1=Amp*Math.sin(k1*x-w1*tslow+phaseShift);		// MAIN EQUATION
+		//var f1=Amp*Math.sin(k1*x-w1*tslow+phaseShift);				// MAIN EQUATION
+		var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);		//
+
 		//--------------------
 		
-		if(document.getElementById("markWaves").checked == '1'){	
-			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
-			ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
-		if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
-			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
-			};
+	//	if (tslow<=3846 && i<=sampling) {		// Only draw with the speed of the wave at the beginning..speed of the sample change of the front?
+			if(document.getElementById("markWaves").checked == '1'){	
+				ctx.rect(xStart+mmppx,yStart+f1, 1, 1);		// Makes dots
+				//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+			}
+			
+			if(f1<-Amp*(0.999) && document.getElementById("markFronts").checked == false){							// Detecting peak.. one way of doing it
+				ctx.rect(xStart+mmppx,yStart-25,0.5,50);
+			}
+	//	}
 	}
 
 	// Rotate K.O. back
@@ -132,6 +156,8 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 }
 
 function draw() {
+
+
 	var c = document.getElementById("myCanvas");
 	var ctx = c.getContext("2d");
 
@@ -142,7 +168,7 @@ function draw() {
 	ctx.rect(350, 0, 2,5000);
 	
 	// item: Wave 1
-	// frequency
+	// SET FREQUENCY FOR BOTH WAVES
 	wave1[7]=document.getElementById("range_frequency1").value;
 	wave2[7]=wave1[7];
 	document.getElementById("value_frequency1").innerHTML=wave1[7];
@@ -203,22 +229,35 @@ function draw() {
 	ctx.stroke();
 	
 	// Time goes forward or backwards?
-	slowdown=document.getElementById("timespeed").value;
-	document.getElementById("value_speed").innerHTML=slowdown;
-	
+	slowdown_factor=document.getElementById("range_speed").value;
+	delta_t=delta_t_min*slowdown_factor;
+	document.getElementById("value_speed").innerHTML=slowdown_factor;
+
 	// Time is actually flowing?
-	if (document.getElementById("button_pause").value==1) 	t+=1;
-	tslow=t*slowdown;	
-	document.getElementById("value_time").innerHTML=Math.floor(t/1000*slowdown*10)/10;
+	if (document.getElementById("button_pause").value==1) 	{
+		Ntime+=1;
+		t+=delta_t
+	}
+	
+	document.getElementById("value_time").innerHTML=t/1000;
 }
 
 function pause_time() {
 	if (document.getElementById("button_pause").value==0) {
-		document.getElementById("button_pause").value=1;
+	
+		document.getElementById("button_pause").value=1;			// WHY IS THIS necessary again? To know if time is flowing or not.
 		document.getElementById("button_pause").innerHTML="PAUSE TIME"
+		timer1=timer2;
+		timer2=0;
+		document.getElementById("value_timer").innerHTML="";
+
 	} else {
 		document.getElementById("button_pause").value=0
 		document.getElementById("button_pause").innerHTML="UNPAUSE TIME"
+		timer2=t;
+		var time_passed=(timer2-timer1)/1000;
+		
+		document.getElementById("value_timer").innerHTML=time_passed;
 	}
 }
 
@@ -227,14 +266,16 @@ function pause_time() {
 <body onLoad="init();">
 A:<span id="test1">ready</span></br>
 B:<span id="test2">ready</span></br></br>
+<div id="test3" value=10></div>
+
 FREQUENCY: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="2000" value="260"> <br/>
 THETA1: <span id="value_theta1"></span><input type="range" id="theta1" min="0" max="90" value="30"> <br/>
-SPEED: x<span id="value_speed"></span> <input type="range" id="timespeed" min="0" max="80" value="20"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
+SPEED: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="20" value="8"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
 n1: <input type="range" id="range_n1" min="0" max="300" value="100"><span id="value_n1"></span></br>
 n2: <input type="range" id="range_n2" min="0" max="300" value="160"><span id="value_n2"></span></br>
 
-TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span><br />
-Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="false"> | 
+TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span> | <span id="value_timer"></span> <br />
+Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="true"> | 
 GRAY LINE is 1 micrometer
 <canvas id="myCanvas" width="3000" height="3000" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
