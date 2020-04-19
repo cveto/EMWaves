@@ -65,7 +65,7 @@ function init() {
 }
 
 function calculate_wavelenght(fTHz,n) {	// Takes n and f in Thz
-	var c0mmpms=299792458							// meters per second == micrometers per microseconds
+	var c0mmpms=299792458							// kilometers per second == milimeters per microseconds
 	var lambda_micrometers=c0mmpms/n/fTHz/1000000;	// in micrometers
 	//var lambda_nanometers=c0mmpms/n/fTHz/1000;		// in nanometers
 	return lambda_micrometers;
@@ -94,7 +94,7 @@ function calculate_border_phase(distance_travelled,lambda) {
 	return phase;
 }
 
-function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
+function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) {
 
 	// Pulled 
 	var fTHz=wave[7];							// f in TeraHerz 10^12
@@ -137,6 +137,12 @@ function drawRay(wave,ctx,xStart,yStart,tilt,phaseShift,n) {
 		var how_many_samples=sampling*t*fTHz/1000000;
 	} else {
 		var how_many_samples=sampling*numPeriodsToDraw;
+	}
+	
+	// DELAY WAVE.. All we're doint is just not showint the wave until the frist wawe reaches
+					// phases won't match because it only doesn't show the wave allthoug it's already there. But they should match in this case.
+	if (t<=tdelay) {
+		how_many_samples=0;
 	}
 	
 	
@@ -204,7 +210,7 @@ function draw() {
 	var xStart=xCenter1-wave1[5]*DPmm*Math.cos(tilt*Math.PI/180);
 	var yStart=yCenter1-wave1[5]*DPmm*Math.sin(tilt*Math.PI/180);
 
-	drawRay(wave1,ctx,xStart,yStart,tilt,0,n1);
+	drawRay(wave1,ctx,xStart,yStart,tilt,0,n1,0);
 	
 
 	////////////////
@@ -237,7 +243,9 @@ function draw() {
 	var deleteme=calculate_wavelenght(wave1[7],n1);
 	wave2_phase=calculate_border_phase(wave1[5],deleteme);
 	
-	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2);
+	// delay of ray2 because waiting on ray1.. depends only on the speed of light. so t=c/distance
+	var tdelay=calculateTravelTime(wave1[5],n1);
+	drawRay(wave2,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
 	
 	
 	// Clear Image
@@ -276,6 +284,17 @@ function pause_time() {
 function reset_time() {
 	t=0;
 	Ntime=0;
+}
+
+
+function THZ2aas (fTHz) {
+	return 1/fTHz*1000000;
+}
+
+function calculateTravelTime(distanceInMicrometers,n) {
+	var c0mmpus=299792458/n;							// meters per second = micrometers per microsecond
+	var timeinatts=distanceInMicrometers/(c0mmpus);		// delay in microseconds
+	return timeinatts*Math.pow(10,12);					// delay in attoseconds
 }
 </script>
 
