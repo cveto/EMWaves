@@ -16,7 +16,7 @@ var Amp = 20;												// Just to make it look presentable on the canvas.
 				
 // CANVAS VARIABLES				
 var ctx;													// CONTEXT
-var sampling=100; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
+var sampling=20; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
 var DPmm=50;												// DOTS PER MICROMETER (resolution)
 
 // TIME: t=t+delta_t = t + delta_t*slowdown_factor
@@ -54,13 +54,16 @@ var n2;
 var stopwatch1=0;
 var stopwatch2=0;
 
+// PLAYGROUND
+var strk_style_before;
+
 // LOADS WITH THML
 function init() {
 	ctx= myCanvas.getContext('2d');
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
 	document.getElementById("markFronts").checked=0;
-	
+	document.getElementById("markFields").checked=0;
 	
 	setInterval(draw,intervalms);							// Calls function draw every intervalms miliseconds
 	//draw();
@@ -84,13 +87,24 @@ function draw() {
 	// BEGIN DRAWING ON THE CANVAS
 		var c = document.getElementById("myCanvas");
 		ctx = c.getContext("2d");
-		ctx.beginPath();
+		ctx.clearRect(0,0, 3000,3000);
 	
 	// WALLS
+		ctx.beginPath();
+		ctx.strokeStyle = 'purple';	
 		ctx.rect(0, 0, c.width, c.height);								// frame
+		ctx.stroke();
+	
+		ctx.beginPath();
+		ctx.strokeStyle = 'green';			
 		ctx.rect(30, 10, DPmm, 2);										// 1 micrometer reference
+		ctx.fillStyle = "green";
+		ctx.font = "15px Arial";
+		ctx.fillText("1 micrometer", 90, 16);
+		
 		ctx.rect(0, xCenter1, 1000, 2);									// Horizontal Line
 		ctx.rect(yCenter1, 0, 2,1000);									// Vertical line
+		ctx.stroke();
 		
 		// Material Above
 		n1=document.getElementById("range_n1").value/100;
@@ -108,18 +122,22 @@ function draw() {
 		var fTHz=document.getElementById("range_frequency1").value;
 		
 		// Left most ray. Saving just for the summed wav. It's an array of 2 arrays
+		
+		ctx.beginPath();
 		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15);
-		
+		ctx.stroke();
+
 		// Middle ray
+		ctx.beginPath();
 		var arrays_middle=draw2rays(fblue,wave1[1],xCenter1+300,yCenter1,15);		
-		
-		// Sum of leftmost and middle ray. Needs raylength to get starting position
+		ctx.stroke();
+		// Sum of leftmost and middle ray. Needs raylength to get starting position	
+
+		ctx.beginPath();
 		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1]);
+		ctx.stroke();
 		
-		
-	// Clear Canvas
-	ctx.clearRect(0,0, 3000,3000);
-	ctx.stroke();
+
 }
 
 function draw2rays(fTHz,raylength,locX,locY,Amp) {
@@ -272,16 +290,10 @@ function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) 
 		array_wave[i]=f1;
 		//--------------------
 		
-		// Make the wave look like it's travelling from 0 without modifying the equation
-		if(document.getElementById("markWaves").checked == '1'){	
-			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-			ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
-		if(f1<-Amp*(0.995) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
-			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
-		}
-		
+		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		//putRayOnCanvas(xStart,yStart,mmppx,f1,ctx);
+		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp);
+		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		// Returns the whole wave it just made
 	}
 
@@ -299,6 +311,55 @@ function wave_equation(Amp,k1,x,w11,t,phaseShift) {
 	return Amp*Math.sin(k1*x-w11*t+phaseShift);
 }
 
+function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp) {
+
+	// Make the wave look like it's travelling from 0 without modifying the equation
+		if(document.getElementById("markWaves").checked == '1'){	
+			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
+			//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+		}
+		
+		if(f1<-Amp*(0.990) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
+			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
+		}
+			
+		// This little fella is very CPU hungry. Optmize? Who has time for that, just wait 18 months  and it'll be twice faster!
+		if(document.getElementById("markFields").checked == '1'){	// So what's the logic with this stroke... The color is predefined before this fucntion is called, So gotta draw everything that was calcualted so far, end that draw, change contex color and start a new one. God...
+			ctx.stroke();
+			var temp_f1=Math.round((((f1/Amp)+1)/2)*7);			// Basically puts the values between 0 and 7--8bit color code			
+			switch (temp_f1) {
+			  case (0):
+				ctx.strokeStyle = '#FBEFEF';	
+				break;
+			  case (1):
+				ctx.strokeStyle = '#F8E0E0';	
+				break;
+			  case (2):
+				ctx.strokeStyle = '#F6CECE';	
+				break;
+			  case (3):
+				ctx.strokeStyle = '#F5A9A9';	
+				break;
+			  case (4):
+				ctx.strokeStyle = '#F78181';	
+				break;
+			  case (5):
+				ctx.strokeStyle = '#FA5858';	
+				break;
+			  case (6):
+				ctx.strokeStyle = '#FE2E2E';	
+				break;
+			  case (7):
+				ctx.strokeStyle = '#FF0000';	
+				break;
+			}	
+			ctx.beginPath();
+			ctx.rect(xStart+mmppx,yStart-25,0.5,50);			// Makes lines
+			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
+		}		
+
+		
+}
 
 // DRAW SUMMED WAVE FROM ARRAYS
 function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
@@ -364,12 +425,12 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;			
 		
-	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum)
+	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum,Amp)
 
 }
 
 // DRAW RAY FROM ARRAY - for the summed wave
-function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave) {
+function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,Amp) {
 
 	// Rotating around which point?		
 	var rotatex = xStart;									// By default the rotation is around the starting point of the wave
@@ -389,17 +450,9 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave) {
 
 		var x=i*1/sampling;							
 		var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
-
 		var f1=array_wave[i]
 		
-		if(document.getElementById("markWaves").checked == '1'){	
-			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-			//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
-		if(f1<-Amp*(0.995) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
-			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
-		}
+		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp)
 	}
 
 	// Rotate K.O. back
@@ -524,7 +577,7 @@ n1: <input type="range" id="range_n1" min="-100" max="300" value="100"><span id=
 n2: <input type="range" id="range_n2" min="-100" max="300" value="160"><span id="value_n2"></span></br>
 
 TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span> | <span id="value_timer"></span> <br />
-Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="1"> | <br />
+Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="1"> || Fields: <input type="checkbox" id="markFields" checked="1"> <br />
 <button id="button_totalref" onclick="findCriticalAngle();">Total reflection angle"</button>
 <button id="button_totalref" onclick="findBrewsterAngle();">Brewster angle"</button></br>
 GRAY LINE is 1 micrometer.  N smallreth than 1 - not programmed to show real results<br />
