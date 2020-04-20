@@ -175,16 +175,16 @@ function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) 
 
 		// -- MAIN FUNCTION
 		//--------------------
-		//var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);
-		var f1 = wave_equation(Amp,k1,x,w11,t,phaseShift);
+		var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);
+		//var f1 = wave_equation(Amp,k1,x,w11,t,phaseShift);
 		// Save the wave_form?
 		array_wave[i]=f1;
 		//--------------------
 		
 		// Make the wave look like it's travelling from 0 without modifying the equation
 		if(document.getElementById("markWaves").checked == '1'){	
-			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-			//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
+			ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
 		}
 		
 		if(f1<-Amp*(0.995) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
@@ -235,46 +235,56 @@ function draw2rays(fTHz,raylength,locX,locY,Amp) {
 
 	//!!!!!!!!!!!!!!!!!
 	// REFRACTED WAVE
-	//  Strating point of refracted wave is the ending point of incoming wave
-		var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
-		var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
+		//  Strating point of refracted wave is the ending point of incoming wave
+			var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
+			var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
+			
+		// Sneels Law
+			var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);	
+			var tilt2=90-theta2rad*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
 		
-	// Sneels Law
-		var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);	
-		var tilt2=90-theta2rad*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
-	
-	// Fresneel's equations for non-magnetic transparent material Z=f(epsilon)
-	// This is for E field, for power it has to be.. squared
-		var RsTOP=n1*Math.cos(thetaRad) - n2*Math.cos(theta2rad);
-	    var RsBOT=n1*Math.cos(thetaRad) + n2*Math.cos(theta2rad);
-		var Rs=Math.pow(RsTOP/RsBOT,2);										
-		var TsE=Math.sqrt(1-Rs);												// E field amplitude reduced by?		
-		var RsE=Math.sqrt(Rs);														// 
+		// Fresneel's equations for non-magnetic transparent material Z=f(epsilon)
+		// This is for E field, for power it has to be.. squared
+			var RsTOP=n1*Math.cos(thetaRad) - n2*Math.cos(theta2rad);
+			var RsBOT=n1*Math.cos(thetaRad) + n2*Math.cos(theta2rad);
+			var Rs=Math.pow(RsTOP/RsBOT,2);										
+			var TsE=Math.sqrt(1-Rs);												// E field amplitude reduced by?		
+			var RsE=Math.sqrt(Rs);														// 
+			
+			//var RpTOP=n1*Math.cos(theta2rad) - n2*Math.cos(thetaRad);
+			//var RpBOT=n1*Math.cos(theta2rad) + n2*Math.cos(thetaRad);
+			//var Rp=Math.abs(RpTOP/RpBOT);
 		
-		//var RpTOP=n1*Math.cos(theta2rad) - n2*Math.cos(thetaRad);
-	    //var RpBOT=n1*Math.cos(theta2rad) + n2*Math.cos(thetaRad);
-		//var Rp=Math.abs(RpTOP/RpBOT);
-	
-	// Calculating the phase of ray 2 - bacause our refracted wave is simulated as a new ray and I have to know at what phase the ray 1 ends
-		var wave1_wavelength=calculate_wavelenght(fTHz,n1);
-		var wave2_phase=calculate_border_phase(raylength,wave1_wavelength);
-	
-	// Shift phase for total reflection
-		if (isNaN(theta2rad)) {	
-			theta2rad=thetaRad-Math.PI/2;
-			tilt2=theta2rad*180/Math.PI;
-		} 
+		// Calculating the phase of ray 2 - bacause our refracted wave is simulated as a new ray and I have to know at what phase the ray 1 ends
+			var wave1_wavelength=calculate_wavelenght(fTHz,n1);
+			var wave2_phase=calculate_border_phase(raylength,wave1_wavelength);
+		
+		// Shift phase for total reflection
+		//	if (isNaN(theta2rad)) {	
+		//		theta2rad=thetaRad-Math.PI/2;
+		//		tilt2=theta2rad*180/Math.PI;
+		//	} 
 
+		
+		// delay of ray2 because waiting on ray1.. depends only on the speed of light. so t=c/distance
+		var tdelay=calculateTravelTime(raylength,n1);
+		
+		// DRAW RAY 2 ---------------
+		var arrayBottomRay=drawRay(fTHz,raylength,Amp*TsE,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
+
+
+
+	//!!!!!!!!!!!!!!!!!
+	// MIRROR REFLECTED WAVE
+	var theta3rad = thetaRad-Math.PI/2;
+	var tilt3=theta3rad*180/Math.PI;
 	
-	// delay of ray2 because waiting on ray1.. depends only on the speed of light. so t=c/distance
-	var tdelay=calculateTravelTime(raylength,n1);
-	
-	// DRAW RAY 2 ---------------
-	var arrayBottomRay=drawRay(fTHz,raylength,Amp*TsE,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
+	//drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,0,n1,0);
+	var arrayReflected=drawRay(fTHz,raylength,Amp*RsE,ctx,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
 
 
 	// return top and bottom rays
-	return [arrayTopRay,arrayBottomRay];
+	return [arrayTopRay,arrayBottomRay,arrayReflected];
 
 }
 
