@@ -31,7 +31,7 @@ var Amp = 20;												// Just to make it look presentable on the canvas.
 				
 // CANVAS VARIABLES				
 var ctx;													// CONTEXT
-var sampling=100; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
+var sampling=200; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
 var DPmm=50;												// DOTS PER MICROMETER (resolution)
 
 // TIME: t=t+delta_t = t + delta_t*slowdown_factor
@@ -51,8 +51,8 @@ var intervalms=20;											// How often the canvas is refreshed - every XY mil
 
 
 // Center point of where the ray refracts
-var xCenter1=350;
-var yCenter1=350;
+var xCenter1=370;
+var yCenter1=370;
 
 
 // WAVES
@@ -62,8 +62,14 @@ var wave1=[ftest,  5, Amp];		// By default 2 and 3 are set to 1 and 2
 //var wave2=[ftest, 5, Amp];		// by default 2 and 3 are ignored
 
 // MATERIALS
-var n1;
-var n2;
+	var n1;
+	var n2;
+
+	// Theese guys needed as a global variable because - dispersive media - on click the button must get access to N
+	var n1ray1;
+	var n1ray2;
+	var n2ray1;
+	var n2ray2;
 
 // STOPWATCH
 var stopwatch1=0;
@@ -104,6 +110,9 @@ function draw() {
 		ctx = c.getContext("2d");
 		ctx.clearRect(0,0, 3000,3000);
 	
+	// Info about dispersion - written at the end because it can be frequency independnt and that's programmed in to
+	
+	
 	// WALLS
 		ctx.beginPath();
 		ctx.strokeStyle = 'purple';	
@@ -114,13 +123,17 @@ function draw() {
 		ctx.strokeStyle = 'green';			
 		ctx.rect(30, 10, DPmm, 2);										// 1 micrometer reference
 		ctx.fillStyle = "green";
-		ctx.font = "15px Arial";
+		ctx.font = "15px Lucida Console";
 		ctx.fillText("1 micrometer", 90, 16);
+		
+		// Single mode fibre core 9um
+		ctx.rect(30, 30, 9*DPmm, 1);										// 1 micrometer reference
+		ctx.fillText("9 micrometers - WIDTH OF SINGLEMODE OPTICAL FIBRE CORE", 500, 34);
+
 		
 		ctx.rect(0, xCenter1, 1000, 2);									// Horizontal Line
 		ctx.rect(yCenter1, 0, 2,1000);									// Vertical line
 		ctx.stroke();
-		
 
 	
 		// DRAW BOTH RAYS
@@ -134,10 +147,7 @@ function draw() {
 		document.getElementById("value_frequency1").innerHTML=fTHz;
 		
 		var fTHz2=document.getElementById("range_frequency2").value;
-		document.getElementById("value_frequency2").innerHTML=fTHz2;
-
-		
-		
+		document.getElementById("value_frequency2").innerHTML=fTHz2;		
 		
 		// Material Above
 		n1=document.getElementById("range_n1").value/100;
@@ -147,41 +157,95 @@ function draw() {
 		n2=document.getElementById("range_n2").value/100;
 		document.getElementById("value_n2").innerHTML=n2;
 
-		// Frequency asfasdfasldf Dispersion is calculated in the next function
+		// IS MEDIA DISPERSIVE; WHICH AND HOW?
+			// check which option is selected
+			var radios = document.getElementsByName('radio_dispersion');
+			var dispersitvity=document.getElementById('range_dispersion').value; 		// dispersitivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+
+			for (var i = 0, length = radios.length; i < length; i++) {
+				// Non dispersive media
+				if (radios[0].checked) {
+					n1ray1=n1;
+					n1ray2=n1;
+					n2ray1=n2;
+					n2ray2=n2;
+					break;
+				
+				// TOP Media Dispersive
+				} else if (radios[1].checked) {
+					n1ray1=getDispersiveN(n1,fTHz,dispersitvity);	
+					n1ray2=getDispersiveN(n1,fTHz2,dispersitvity);	
+					n2ray1=n2;	
+					n2ray2=n2;	
+					break;
+				
+				// BOTTOM Media Dispersive
+				} else if (radios[2].checked) {
+					n1ray1=n1;	
+					n1ray2=n1;
+					n2ray1=getDispersiveN(n2,fTHz,dispersitvity);		
+					n2ray2=getDispersiveN(n2,fTHz2,dispersitvity);	
+					break;
+					
+				// BOTH Media Dispersive
+				} else if (radios[3].checked) {
+					n1ray1=getDispersiveN(n1,fTHz,dispersitvity);	
+					n1ray2=getDispersiveN(n1,fTHz2,dispersitvity);	
+					n2ray1=getDispersiveN(n2,fTHz,dispersitvity);		
+					n2ray2=getDispersiveN(n2,fTHz2,dispersitvity);	
+					break;
+					
+				// Specially dispersive media on which all wavelenghts are the same
+				} else if (radios[4].checked) {
+					n1ray1=n1;
+					n1ray2=n1;	
+					n2ray1=500/fTHz;
+					n2ray2=500/fTHz2;	
+					break;
+				}
+			}		
+	
+			// DRAW LABELS ON CANVAS
+			ctx.beginPath();
+			ctx.fillStyle = "green";
+			ctx.font = "15px Arial";
+			ctx.fillText("n1(" + fTHz + " THz): "+n1ray1, xCenter1+30, yCenter1-300);
+			ctx.fillText("n1(" + fTHz2 + " THz): "+n1ray2, xCenter1+30, yCenter1-280);
+			ctx.fillText("n2(" + fTHz + " THz): "+n2ray1, xCenter1+30, yCenter1+280);
+			ctx.fillText("n2(" + fTHz2 + " THz): "+n2ray2, xCenter1+30, yCenter1+300);
+			ctx.stroke();		
 
 		// Left most 3 rays. Saving just for the summed wav. It's an array of 2 arrays
 		ctx.beginPath();
-		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1,n2);
+		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1ray1,n2ray1);
 		ctx.stroke();
+
 
 		// Middle 3 rays ray
 		ctx.beginPath();
-		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,15,n1,n2);		// n2 is not connected to dispersitvity yet
+		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,15,n1ray2,n2ray2);		
 		ctx.stroke();
 		// Sum of leftmost and middle ray. Needs raylength to get starting position	
 
+
+		// RIGHT MOST RAY = RAY 1 + RAY 2
 		ctx.beginPath();
-		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1]);
+		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1]);		//arrays, arrays2, locX, locY, raylength
 		ctx.stroke();
+
+		
+		
 		
 
+
+}
+
+function getDispersiveN(n,fTHz,dispersitvity) {
+	return (n+((fTHz-300)/300)*dispersitvity);
 }
 
 function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 //--- WAVES---
-
-	// TEMPORARILY HERE; SHOULD BE MOVeD
-	// THIS TELLS IF N2 is frequency dependent
-	// Get dispersion-frequency coefficient
-		var dispersivity=document.getElementById("range_dispersion").value;
-		document.getElementById("value_randgedispersion").innerHTML=dispersivity;
-		
-		if (dispersivity==1) {
-		//alert("bam!");
-			n2=n2*fTHz/300;		// The higher the freqency, he bigger the n, with at 300Thz being one
-		}
-
-
 
 	// INCOMING WAVE
 		
@@ -256,12 +320,19 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 
 
 	//!!!!!!!!!!!!!!!!!
-	// MIRROR REFLECTED WAVE
+	// MIRROR REFLECTED WAVE - only if enabled
+	if (document.getElementById("showReflecterRay").checked==1) {
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;
 		
 		//drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,0,n1,0);
 		var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
+
+	} else {
+		var arrayReflected=new Array();  // Empty array
+	}
+
+
 
 
 		// return top and bottom rays
@@ -283,9 +354,9 @@ function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) 
 	var rotatey = yStart;		
 				
 	// Pulled 		
-	var fTHz;									// f in TeraHerz 10^12
-	var raylength;								// length of wave in micrometers in the direction of movement for presentation purposes)
-	var Amp;										// Wave Amplitude - has no meaning, just to make it nice on the canvas
+	var fTHz;												// f in TeraHerz 10^12
+	var raylength;											// length of wave in micrometers in the direction of movement for presentation purposes)
+	var Amp;												// Wave Amplitude - has no meaning, just to make it nice on the canvas
 			
 	// Calculated		
 	var raytime = raylength*n/c0mmpatts;					// time for wave to travel the defined length
@@ -422,11 +493,12 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 	// GET THETA ANGLE FROM USER					
 	var theta1=document.getElementById("theta1").value/10;
 	document.getElementById("value_theta1").innerHTML=theta1*10;
+	
 	var thetaRad=Math.PI/180*(theta1);								// Theta in radians
 	var tilt=90-theta1;												// Angle from horizontal line... because Javascript
 
 	//!!!!!!!!!!!!!!!!!		
-	// INCOMING WAVE
+	// INCOMING WAVE - incoming waves are always at the same angle
 		// SUM UP 2 arrays -- thank you https://stackoverflow.com/questions/5760058/how-to-return-multiple-arrays-from-a-function-in-javascript
 		var waveIncSum = wave1incoming.map(function (num, idx) {
 			return num + wave2incoming[idx];
@@ -440,29 +512,42 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 	
 	
 	//!!!!!!!!!!!!!!!!!
-	// REFRACTED WAVE
-	// SUM UP 2 ARRAYS
-		var waveRefSum = wave1refracted.map(function (num, idx) {
-			return num + wave2refracted[idx];
-		});	
-		
-		//  Strating point of refracted wave is the ending point of incoming wave
-			var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
-			var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
-			
-		// Sneels Law
-			var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);	
-			var tilt2=90-theta2rad*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
-
-		// Shift phase for total reflection
-			if (isNaN(theta2rad)) {	
-				theta2rad=thetaRad-Math.PI/2;
-				tilt2=theta2rad*180/Math.PI;
-			} 
-	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2,waveRefSum)
+	// REFRACTED WAVE - refracted rays ae not always at the same angle!
+		// SUM UP 2 ARRAYS - only if the angle is the same for both .. eg  if the medium is not dispersive!
 	
+	//  Strating point of refracted and reflected wave is the ending point of incoming wave
+	var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
+	var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
+
+	// angle of refraction for frist ray
+	var theta2radWAVE1=Math.asin(Math.sin(thetaRad)*n1ray1/n2ray1);	
+	var tilt2_1=90-theta2radWAVE1*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
+
+	var theta2radWAVE2=Math.asin(Math.sin(thetaRad)*n1ray2/n2ray2);	
+	var tilt2_2=90-theta2radWAVE2*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
+
+		// SHOW SUMMED RAY ONLY IF THEY ARE IN THE SAME DIRECTION
+		if (theta2radWAVE1==theta2radWAVE2) {
+			theta2rad=theta2radWAVE1;
+		
+			// Add waves together
+			var waveRefSum = wave1refracted.map(function (num, idx) {
+				return num + wave2refracted[idx];
+			});	
+				
+		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum)
+		
+		} else {		// SHOW BOTH RAYS
+		
+		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted)
+		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted)			
+		}
+		
+		
 	//!!!!!!!!!!!!!!!!!
 	// REFLECTED WAVE
+		// Disable by choice
+		
 		// SUM UP 2 arrays -- thank you https://stackoverflow.com/questions/5760058/how-to-return-multiple-arrays-from-a-function-in-javascript
 		var waveReflSum = wave1reflected.map(function (num, idx) {
 			return num + wave2reflected[idx];
@@ -562,7 +647,7 @@ function reset_time() {
 	t=0;
 }
 
-function THZ2aas (fTHz) {
+function THZ2aas (fTHz) {  // Terahertz to atoseconds
 	return 1/fTHz*1000000;
 }
 
@@ -595,8 +680,12 @@ function findBrewsterAngle() {
 	// Get frequency
 	
 	// get n2 and n2
-	var n1 = document.getElementById("range_n1").value/100;			// Don't really need to divide, but let's be consisent.
-	var n2 = document.getElementById("range_n2").value/100;			// Not optimizing for power here optimizing for readability... (and still failing)
+	//var n1 = document.getElementById("range_n1").value/100;			// Don't really need to divide, but let's be consisent.
+	//var n2 = document.getElementById("range_n2").value/100;			// Not optimizing for power here optimizing for readability... (and still failing)
+
+	var n1=n1ray1;
+	var n2=n2ray1;
+
 	var brewsterAngle=Math.atan(Math.abs(n2)/Math.abs(n1));
 	
 		// If not possible to calculate
@@ -609,6 +698,10 @@ function findBrewsterAngle() {
 	// Calculate total reflectino angle
 }
 
+function setThetaAngle(angle_deg) {
+	document.getElementById("theta1").value=angle_deg;
+}
+
 </script>
 
 <body onLoad="init();">
@@ -617,21 +710,35 @@ B:<span id="test2">ready</span></br></br>
 <div id="test3" value=10></div>
 
 <button id="button_reset" onclick="reset_time()">RESET TIME</button><br />
-FREQUENCY1: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="0" max="900" value="260"> <br/>
-FREQUENCY2: <span id="value_frequency2"></span>THz<input type="range" id="range_frequency2" min="0" max="900" value="260"> <br/>
+FREQUENCY1: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="100" max="900" value="460"> <br/>
+FREQUENCY2: <span id="value_frequency2"></span>THz<input type="range" id="range_frequency2" min="100" max="900" value="370"> <br/>
 
-THETA1: <span id="value_theta1"></span>°<input type="range" id="theta1" min="0" max="900" value="560"> <br/>
+THETA1: <span id="value_theta1"></span>°<input type="range" id="theta1" min="0" max="900" value="250">
+<button onclick="setThetaAngle(0)">Theta=0</button></br>	
+
+
 SPEED: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="40" value="20"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
-n1: <input type="range" id="range_n1" min="-100" max="300" value="100"><span id="value_n1"></span></br>
-n2: <input type="range" id="range_n2" min="-100" max="300" value="160"><span id="value_n2"></span></br>
-Dispersion [1 for non-dispersive media]: <input type="range" id="range_dispersion" min="0" max="1" value="0"><span id="value_randgedispersion"></span></br>
+n1: <input type="range" id="range_n1" min="-100" max="300" value="160"><span id="value_n1"></span></br>
+n2: <input type="range" id="range_n2" min="-100" max="300" value="100"><span id="value_n2"></span></br>
+
+<br />
+Dispersion [1 for non-dispersive media]: <input type="range" id="range_dispersion" min="1" max="10" value="1"><span id="value_randgedispersion"></span></br>
+<input type="radio"name="radio_dispersion" checked="checked" value="0">	Both media not dispersive </input><br>
+<input type="radio"name="radio_dispersion" value="1">						Top media dispersive </input><br>
+<input type="radio"name="radio_dispersion" value="2">						Bottom media dispersive </input><br>
+<input type="radio"name="radio_dispersion" value="3">						Both dispersive </input><br>
+<input type="radio"name="radio_dispersion" value="4">						Media2: n2=const./fTHZ - inversly corelated to frequency - all the waves will end up having the same wavelength </input><br>
+
+<br /><br />
 This dispersivity is linearly dependend of the frequency. the amount tells how much
 
 TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span> | <span id="value_timer"></span> <br />
 Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="1"> || Fields: <input type="checkbox" id="markFields" checked="1"> <br />
 <button id="button_totalref" onclick="findCriticalAngle();">Total reflection angle"</button>
 <button id="button_totalref" onclick="findBrewsterAngle();">Brewster angle"</button></br>
-GRAY LINE is 1 micrometer.  N smallreth than 1 - not programmed to show real results<br />
+GRAY LINE is 1 micrometer.  N smallreth than 1 - not programmed to show real results<br /><br />
+
+Show reflected ray<input type="checkbox" id="showReflecterRay" checked="checked"> <br />
 
 
 
