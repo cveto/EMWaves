@@ -5,63 +5,61 @@
 body {
   background-color: linen;
 }
-
 input[type="range"] {
   width:400px;
 }
 
-
-.coveringCanvas {
-    background-color: rgba(255, 0, 0, .1);
-
+#div_top {
+  position: relative;
+  border: 3px solid #73AD21;
 }
 
-
 #div_bottom {
-position: relative;
-z-index: 0;
+ position: relative;
+ border: 3px solid #73AA21;
+
+ z-index: 0;
+ display: flex;
+ justify-content: center;
 }
 
 #div_background {
-position: absolute;
+position: relative;
 z-index: 1;
-height: 1000px;
-width: 1000px;
-top: 0px;
-left: 0px;
 }
 
 #div_animation {
 position: absolute;
 z-index: 2;
-height: 1000px;
-width: 1000px;
 }
 
-
 </style>
-
 </head>
 
 
-
 <script>
-
 // CONSTANTS		
 var c0mmpatts=299792458*Math.pow(10,9)						// Speed of light - micrometers per atoseconds
-				
+
+
+// SIGNAL			
 var fgreen=565;												// THz 10^12	green color median frequency
 var fred=442.5;												// THz 10^12	red   color median frequency
 var fblue=640;												// THz 10^12	blue  color median frequency
-var ftest=299.792458;										// freqency at which wavelength is exzactly 1 micrometer and its period is 3335.640952 attoseconds
-				
+var ftest=299.792458;										// freqency at which wavelength is exzactly 1 micrometer and its period is 3335.640952 attoseconds		
+
 var Amp = 20;												// Just to make it look presentable on the canvas.
-				
-				
-// CANVAS VARIABLES				
-var ctx;													// CONTEXT
+var wave1=[ftest,  5, Amp];									
+
+		
+// CANVAS VARIABLES		
 var sampling=100; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
-var DPmm=50;												// DOTS PER MICROMETER (resolution)
+var DPmm=50;												// DOTS PER MICROMETER (resolution).. Dont change this, it will get messy
+
+var xCenter1=300;											// Border between rays
+var yCenter1=360;
+var canvasWidth=DPmm*24;
+var canvasHeight=canvasWidth*Math.sqrt(2);
 
 // TIME: t=t+delta_t = t + delta_t*slowdown_factor
 var t=0;													// time in attoseconds since the beginnig of simulation
@@ -79,23 +77,12 @@ var intervalms=20;											// How often the canvas is refreshed - every XY mil
 															// every intervalms the compute has to calculate the whole image.. can he do it in 20ms?
 
 
-// Center point of where the ray refracts
-var xCenter1=300;
-var yCenter1=360;
-
-
-// WAVES
-
-//  wave1[freqency, pathlength in micrometers, amplitude]
-var wave1=[ftest,  5, Amp];		// By default 2 and 3 are set to 1 and 2
-//var wave2=[ftest, 5, Amp];		// by default 2 and 3 are ignored
-
 // MATERIALS
-	var n1;
-	var n2;
+	var n1;													// As set on the sliders
+	var n2;													// As set on the sliders
 
 	// Theese guys needed as a global variable because - dispersive media - on click the button must get access to N
-	var n1ray1;
+	var n1ray1;												// For dispersive media
 	var n1ray2;
 	var n2ray1;
 	var n2ray2;
@@ -114,28 +101,67 @@ function init() {
 	document.getElementById("markFronts").checked=0;
 	document.getElementById("markFields").checked=0;
 	
-
-			var b = document.getElementById("background_canvas");
-			var btx = b.getContext("2d");
-			
-		drawMathPaper(20,20,50,DPmm/2,25,btx);
-
+	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	// Backround Canvas
+	var canvas2 = document.getElementById("background_canvas");
+	canvas2.width=canvasWidth;
+	canvas2.height=canvasHeight;
+	var ctx2 = canvas2.getContext("2d");	
 	
+	// KARO ZVEZEK
+		var num_squares_hor=canvasWidth/(DPmm/2)-4;
+		var num_squares_ver=Math.floor(canvasHeight/(DPmm/2)-6);
+		drawMathPaper(DPmm,DPmm,num_squares_hor,num_squares_ver,DPmm/2,ctx2);							// karo zvezek
+																										//	block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx
+	// WALLS
+		ctx2.setLineDash([]);						// Normals traight line
+		ctx2.beginPath();
+		ctx2.strokeStyle = '#585858';	
+		ctx2.rect(0, 0, canvas2.width, canvas2.height);								// frame
+		ctx2.stroke();
+		
+	// 1 micrometer reference
+		ctx2.beginPath();
+		ctx2.strokeStyle = 'red';			
+		ctx2.rect(DPmm, DPmm*5/4, DPmm, 1);										
 	
-	setInterval(draw,intervalms);							// Calls function draw every intervalms miliseconds
+		ctx2.fillStyle = "green";
+		ctx2.font = "20px Lucida Console";
+		fillTextkaro("1um",3,1,ctx2,DPmm);
+		
+		// Single mode fibre core 9um
+		ctx2.rect(30, 30, 9*DPmm, 1);										// 1 micrometer reference
+		ctx2.fillText("9 micrometers - WIDTH OF SINGLEMODE OPTICAL FIBRE CORE", 500, 34);
+
+		
+		ctx2.rect(0, yCenter1 , 1500, 2);									// Horizontal Line
+		ctx2.rect(xCenter1, 0, 2, 1500);										// Vertical line
+		ctx2.stroke();
+
+	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	// Animated Canvas
+	canvas1 = document.getElementById("myCanvas");
+	canvas1.width=canvasWidth;
+	canvas1.height=canvasHeight;
+	
+	var ctx1 = canvas1.getContext("2d");
+	//setInterval(draw,intervalms);									// Calls function draw every intervalms miliseconds
+	setInterval( function() { draw(ctx1,canvas1); }, intervalms );
 	//draw();
 	
 }
 
+// Places  text relative to the math square
+function fillTextkaro(tekst,kvadratek_x,kvadratek_y,ctx,DPmm) {
+	ctx.fillText(tekst, DPmm+(kvadratek_x-1)*DPmm/2+DPmm/20,DPmm+(kvadratek_y)*DPmm/2-DPmm/10);
+}
+
 // FUNCTION THAT IS BEEING CALLED EVERY XYZ MILISECOND FOR ANIMATION
-function draw() {
+function draw(ctx1,canvas) {
 
 	// BEGIN DRAWING ON THE CANVAS
-		var c = document.getElementById("myCanvas");
-		ctx = c.getContext("2d");
-		ctx.clearRect(0,0, 3000,3000);
-
-
+		ctx1.clearRect(0,0, canvas.width,canvas.height);									// CLEAR CANVAS
+		
 	//---- TIME INFO ----
 		// GET SPEED FROM USER, APPLY SPEED, SHOW USER WHAT SPEED IS CURRENTLY IN THE RUN
 			slowdown_factor=document.getElementById("range_speed").value;
@@ -151,27 +177,6 @@ function draw() {
 		}
 		document.getElementById("value_time").innerHTML=t/1000;
 
-	// WALLS
-		ctx.beginPath();
-		ctx.strokeStyle = 'purple';	
-		ctx.rect(0, 0, c.width, c.height);								// frame
-		ctx.stroke();
-	
-		ctx.beginPath();
-		ctx.strokeStyle = 'green';			
-		ctx.rect(30, 10, DPmm, 2);										// 1 micrometer reference
-		ctx.fillStyle = "green";
-		ctx.font = "15px Lucida Console";
-		ctx.fillText("1 micrometer", 90, 16);
-		
-		// Single mode fibre core 9um
-		ctx.rect(30, 30, 9*DPmm, 1);										// 1 micrometer reference
-		ctx.fillText("9 micrometers - WIDTH OF SINGLEMODE OPTICAL FIBRE CORE", 500, 34);
-
-		
-		ctx.rect(0, yCenter1 , 1500, 2);									// Horizontal Line
-		ctx.rect(xCenter1, 0, 2, 1500);										// Vertical line
-		ctx.stroke();
 
 	
 		// DRAW BOTH RAYS
@@ -244,45 +249,39 @@ function draw() {
 			}		
 	
 			// DRAW LABELS ON CANVAS
-			ctx.beginPath();
-			ctx.fillStyle = "green";
-			ctx.font = "15px Arial";
-			ctx.fillText("n1(" + fTHz + " THz) = "+n1ray1, xCenter1+30, yCenter1-300);
-			ctx.fillText("n1(" + fTHz2 + " THz) = "+n1ray2, xCenter1+30, yCenter1-280);
-			ctx.fillText("n2(" + fTHz + " THz) = "+n2ray1, xCenter1+30, yCenter1+280);
-			ctx.fillText("n2(" + fTHz2 + " THz) = "+n2ray2, xCenter1+30, yCenter1+300);
-			ctx.stroke();		
+			ctx1.beginPath();
+			ctx1.fillStyle = "green";
+			ctx1.font = "15px Arial";
+			ctx1.fillText("n1(" + fTHz + " THz) = "+n1ray1, xCenter1+30, yCenter1-300);
+			ctx1.fillText("n1(" + fTHz2 + " THz) = "+n1ray2, xCenter1+30, yCenter1-280);
+			ctx1.fillText("n2(" + fTHz + " THz) = "+n2ray1, xCenter1+30, yCenter1+280);
+			ctx1.fillText("n2(" + fTHz2 + " THz) = "+n2ray2, xCenter1+30, yCenter1+300);
+			ctx1.stroke();		
 
 		// Left most 3 rays. Saving just for the summed wav. It's an array of 2 arrays
-		ctx.beginPath();
-		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1ray1,n2ray1);
-		ctx.stroke();
+		ctx1.beginPath();
+		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1ray1,n2ray1,ctx1);
+		ctx1.stroke();
 
 
 		// Middle 3 rays ray
-		ctx.beginPath();
-		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,15,n1ray2,n2ray2);		
-		ctx.stroke();
+		ctx1.beginPath();
+		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,15,n1ray2,n2ray2,ctx1);		
+		ctx1.stroke();
 		// Sum of leftmost and middle ray. Needs raylength to get starting position	
 
 
 		// RIGHT MOST RAY = RAY 1 + RAY 2
-		ctx.beginPath();
-		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1]);		//arrays, arrays2, locX, locY, raylength
-		ctx.stroke();
-
-		
-		
-		
-
-
-}
+		ctx1.beginPath();
+		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
+		ctx1.stroke();
+};
 
 function getDispersiveN(n,fTHz,dispersitvity) {
 	return (n+((fTHz-300)/300)*dispersitvity);
 }
 
-function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
+function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 //--- WAVES---
 
 	// INCOMING WAVE
@@ -301,7 +300,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 		var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
 		var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 		
-	var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,0,n1,0);
+	var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
 
 
 	//!!!!!!!!!!!!!!!!!
@@ -353,8 +352,8 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 		var tdelay=calculateTravelTime(raylength,n1);
 		
 		// DRAW RAY 2 ---------------
-		//var arrayBottomRay=drawRay(fTHz,raylength,Amp*Te,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
-		var arrayBottomRay=drawRay(fTHz,raylength*3,Amp*Te,ctx,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
+		//var arrayBottomRay=drawRay(fTHz,raylength,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
+		var arrayBottomRay=drawRay(fTHz,raylength*3,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
 
 
 
@@ -364,8 +363,8 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;
 		
-		//drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,0,n1,0);
-		var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
+		//drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
+		var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
 
 	} else {
 		var arrayReflected=new Array();  // Empty array
@@ -380,7 +379,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2) {
 }
 
 // FUNCTION THAT ACTUALLYD DRAWS THE WAVES
-function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) {
+function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay) {
 
 
 	// Defined
@@ -404,13 +403,13 @@ function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) 
 	var w11=2*Math.PI*fTHz/Math.pow(10,6);					// Angular speed in rad/attoseconds		
 			
 	// START DRAWING WHERE?
-	ctx.moveTo(xStart,yStart);	
+	ctx1.moveTo(xStart,yStart);	
 
 	// ROTATE DRAWN IMAGE AROUND WHICH POINT (for the angle - theta of wave)
 	// Basically this thing draws wave in x diretin then rotates it to avoid cartezian converions.
-	ctx.translate(rotatex,rotatey);		
-	ctx.rotate(tilt * Math.PI / 180);
-	ctx.translate(-rotatex,-rotatey);
+	ctx1.translate(rotatex,rotatey);		
+	ctx1.rotate(tilt * Math.PI / 180);
+	ctx1.translate(-rotatex,-rotatey);
 	
 	// Calculated
 	var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
@@ -442,16 +441,16 @@ function drawRay(fTHz,raylength,Amp,ctx,xStart,yStart,tilt,phaseShift,n,tdelay) 
 		//--------------------
 		
 		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		//putRayOnCanvas(xStart,yStart,mmppx,f1,ctx);
-		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp);
+		//putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		// Returns the whole wave it just made
 	}
 
 	// Rotate K.O. back
-	ctx.translate(rotatex,rotatey);
-	ctx.rotate(-tilt * Math.PI / 180);
-	ctx.translate(-rotatex,-rotatey);	
+	ctx1.translate(rotatex,rotatey);
+	ctx1.rotate(-tilt * Math.PI / 180);
+	ctx1.translate(-rotatex,-rotatey);	
 	
 	// Return the array if you want it.
 	return array_wave;
@@ -464,7 +463,7 @@ function wave_equation(Amp,k1,x,w11,t,phaseShift) {
 
 function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx) {
 	ctx.beginPath();
-    ctx.strokeStyle = '#ff0000';
+    ctx.strokeStyle = '#909090';
 	ctx.setLineDash([1, 3]);/*dashes are 5px and spaces are 3px*/
 	ctx.beginPath();
 	  
@@ -481,21 +480,18 @@ function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizont
 	}
 }
 
-function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp) {
+function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 
 	// Make the wave look like it's travelling from 0 without modifying the equation
 		if(document.getElementById("markWaves").checked == '1'){	
-			ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-			//ctx.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+			ctx1.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
+			//ctx1.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
 		}
 		
-		if(f1<-Amp*(0.990) && document.getElementById("markFronts").checked == true){							// Detecting peak.. one way of doing it
-			ctx.rect(xStart+mmppx,yStart-25,0.5,50);
-		}
 			
 		// This little fella is very CPU hungry. Optmize? Who has time for that, just wait 18 months  and it'll be twice faster!
 		if(document.getElementById("markFields").checked == '1'){	// So what's the logic with this stroke... The color is predefined before this fucntion is called, So gotta draw everything that was calcualted so far, end that draw, change contex color and start a new one. God...
-			ctx.stroke();
+			ctx1.stroke();
 			
 			// JAvascript faster with fixed number.
 			// Normalization with Amplitude of the Incoming wave! Now how am I going to get that in here...global variable again..
@@ -504,33 +500,33 @@ function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp) {
 			
 			switch (temp_f1) {
 			  case (0):
-				ctx.strokeStyle = '#FBEFEF';	
+				ctx1.strokeStyle = '#FBEFEF';	
 				break;
 			  case (1):
-				ctx.strokeStyle = '#F8E0E0';	
+				ctx1.strokeStyle = '#F8E0E0';	
 				break;
 			  case (2):
-				ctx.strokeStyle = '#F6CECE';	
+				ctx1.strokeStyle = '#F6CECE';	
 				break;
 			  case (3):
-				ctx.strokeStyle = '#F5A9A9';	
+				ctx1.strokeStyle = '#F5A9A9';	
 				break;
 			  case (4):
-				ctx.strokeStyle = '#F78181';	
+				ctx1.strokeStyle = '#F78181';	
 				break;
 			  case (5):
-				ctx.strokeStyle = '#FA5858';	
+				ctx1.strokeStyle = '#FA5858';	
 				break;
 			  case (6):
-				ctx.strokeStyle = '#FE2E2E';	
+				ctx1.strokeStyle = '#FE2E2E';	
 				break;
 			  case (7):
-				ctx.strokeStyle = '#FF0000';	
+				ctx1.strokeStyle = '#FF0000';	
 				break;
 			}	
-			ctx.beginPath();
-			ctx.rect(xStart+mmppx,yStart-25,0.5,50);			// Makes lines
-			//ctx.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
+			ctx1.beginPath();
+			ctx1.rect(xStart+mmppx,yStart-25,0.5,50);			// Makes lines
+			//ctx1.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
 		}		
 
 		
@@ -557,13 +553,13 @@ function sumArrays(array1,array2) {				// Sets the same size for arrays then add
 }
 
 // DRAW SUMMED WAVE FROM ARRAYS
-function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
+function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
 //--- WAVES---
 	// Get arrays:
 	var wave1incoming=arrays1[0];
 	var wave1refracted=arrays1[1];
 	var wave1reflected=arrays1[2];
-	
+
 	var wave2incoming=arrays2[0];
 	var wave2refracted=arrays2[1];
 	var wave2reflected=arrays2[2];
@@ -583,8 +579,9 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 		// Starting point of the incoing wave is ray_length away from the central point
 		var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
 		var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
-			
-	drawRayfromArray(raylength,xStart,yStart,tilt,waveIncSum);
+				
+
+	drawRayfromArray(raylength,xStart,yStart,tilt,waveIncSum,ctx1);
 	
 	
 	//!!!!!!!!!!!!!!!!!
@@ -609,10 +606,10 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 			// ADD waves together
 			// make arrays size equal, preventNaNs
 			var waveRefSum=sumArrays(wave1refracted,wave2refracted);
-			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum)
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum,ctx1)
 		} else {	// SHOW BOTH RAYS
-		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted)
-		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted)				
+		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted,ctx1)
+		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted,ctx1)				
 		}
 		
 		
@@ -626,26 +623,24 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength) {
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;			
 		
-	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum,Amp)
+	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum,ctx1)
 
 }
 
 // DRAW RAY FROM ARRAY - for the summed wave
-function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,Amp) {
-
+function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 	// Rotating around which point?		
 	var rotatex = xStart;									// By default the rotation is around the starting point of the wave
 	var rotatey = yStart;		
 				
 	// Pulled 	
-	
 	// START DRAWING WHERE?
-	ctx.moveTo(xStart,yStart);	
+	ctx1.moveTo(xStart,yStart);	
 
 	// ROTATE DRAWN IMAGE AROUND WHICH POINT (for the angle - theta of wave)
-	ctx.translate(rotatex,rotatey);		
-	ctx.rotate(tilt * Math.PI / 180);
-	ctx.translate(-rotatex,-rotatey);
+	ctx1.translate(rotatex,rotatey);		
+	ctx1.rotate(tilt * Math.PI / 180);
+	ctx1.translate(-rotatex,-rotatey);
 	
 	for (var i=0;i<=array_wave.length;++i) {
 
@@ -653,13 +648,13 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,Amp) {
 		var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
 		var f1=array_wave[i]
 		
-		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx,Amp)
+		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1)
 	}
 
 	// Rotate K.O. back
-	ctx.translate(rotatex,rotatey);
-	ctx.rotate(-tilt * Math.PI / 180);
-	ctx.translate(-rotatex,-rotatey);	
+	ctx1.translate(rotatex,rotatey);
+	ctx1.rotate(-tilt * Math.PI / 180);
+	ctx1.translate(-rotatex,-rotatey);	
 	
 	// Return the array if you want it.
 }
@@ -770,7 +765,8 @@ function setThetaAngle(angle_deg) {
 </script>
 
 <body onLoad="init();">
-<div>
+
+<div id="div_top">
 
 A:<span id="test1">ready</span></br>
 B:<span id="test2">ready</span></br></br>
@@ -823,11 +819,11 @@ P polarized wave <input type="range" id="range_polarisation" min="0" max="1" val
 <div id="div_bottom">
 
 	<div id="div_background">
-	<canvas id="background_canvas" width="1500" height="800"></canvas>
+	<canvas id="background_canvas"></canvas>
 	</div>
 
 	<div id="div_animation">
-	<canvas id="myCanvas"  width="1500" height="800" style="border:4px solid #d3d3d3;">
+	<canvas id="myCanvas">
 	Your browser does not support the HTML5 canvas tag.</canvas>
 	</div>
 </div>
