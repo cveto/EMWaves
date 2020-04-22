@@ -11,32 +11,69 @@ input[type="range"] {
 
 
 /*MAIN PAGE DIVIDERS*/
-#div_top {
-  position: relative;
+
+* {
+  box-sizing: border-box;
+}
+
+.column {
+  float: left;
+  min-width: 500px;
+  min-height: 50px;
   border: 3px solid #73AD21;
 }
 
-#div_bottom {
- position: relative;
- border: 3px solid #73AA21;
- z-index: 0;
- display: flex;
- justify-content: center;
+.row {
+   border: 3px solid blue;  
+   width: 1800px; 
+   min-height:50px;
+   padding:0px;
 }
 
-#div_background {
-position: relative;
-z-index: 1;
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+	#levi {
 }
+	  max-width: 580px;
+	  padding: 25px;
+	 word-wrap: break-word;
 
-#div_animation {
-position: absolute;
-z-index: 2;
-}
+	}
+	
+	#desni {
+	  width: 1200px;
+	  height: 1800px;
+	  float: left;
+	  position: relative;
+	  border: 3px solid #73AD21;
+	}
+
+		#zadej {
+		  width: 100%;
+		  height: 100%;
+		  position: absolute;
+		  top: 0;
+		  left: 0;
+		}
+		#spredej {
+		  width: 100%;
+		  height: 100%;
+		  position: absolute;
+		  top: 0;
+		  left: 0;
+		  z-index: 10;
+		}
+
+
+
+
+
 
 
 /*POPUPS*/
-
 .white_content {
   display: none;
   position: absolute;
@@ -117,7 +154,47 @@ var strk_style_before;
 
 // POPUPS:
 
+
+
 function init() {
+	// KEYBOARD LISTENERS
+	document.body.onkeyup = function(e){
+		if(e.keyCode == 80 || e.keyCode==32){		// Letter P
+			pause_time();
+		}
+	}
+	
+		document.body.onkeydown = function(e){
+		if(e.keyCode == 80 || e.keyCode==32){		// Letter P
+			pause_time();
+		} else if(e.keyCode == 37){		// RIGHT arrow
+			var theta=Number(document.getElementById("theta1").value);
+			if (theta<=900) {
+				setThetaAngle(theta+1);
+			}
+			
+		} else if(e.keyCode == 39){		// RIGHT arrow
+			var theta=Number(document.getElementById("theta1").value);
+			if (theta>=0) {
+				setThetaAngle(theta-1);
+			}
+		}
+	}
+		
+	// DISABLE DEFAULT KEYBOARD BEHAVIOUR
+	window.addEventListener("keydown", function(e) {
+		// space and arrow keys
+		if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+			e.preventDefault();
+		}
+	}, false);
+	
+
+
+
+	
+	
+	
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
 	document.getElementById("markFronts").checked=0;
@@ -218,7 +295,7 @@ function draw(ctx1,canvas) {
 		if (document.getElementById("button_pause").value==1) 	{
 			t+=delta_t
 		}
-		document.getElementById("value_time").innerHTML=t/1000;
+		document.getElementById("value_time").innerHTML=(t/1000).toFixed(2);
 
 
 	
@@ -328,14 +405,14 @@ function draw(ctx1,canvas) {
 			
 			
 			if (1==1) { 	//Disabling of too much
-				//OTHER THINGS
+				//OTHER THINGS ZAREK 1
 				var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
 				var c0zg=c0/n1ray1;
 				var c0sp=c0/n2ray1;
 				var lambda_zg=c0/(fTHz*n1ray1*Math.pow(10,6));		// in micrometers
 				var lambda_sp=c0/(fTHz*n2ray1*Math.pow(10,6));
 				var omega=2*Math.PI*fTHz/Math.pow(10,6);      // rad/as
-				var kzg=2*Math.PI/lambda_zg;				  // / um
+				var kzg=2*Math.PI/lambda_zg;				  // um
 				var ksp=2*Math.PI/lambda_sp;
 
 				ctx1.beginPath();
@@ -355,7 +432,22 @@ function draw(ctx1,canvas) {
 				fillTextkaro("ω[zg.]= "+Math.round(omega*1000*1000)/1000+" mrad/as",2,37,ctx1,DPmm);  
 				fillTextkaro("ω[sp.]= "+Math.round(omega*1000*1000)/1000+" mrad/as",2,38,ctx1,DPmm); 
 				
-				fillTextkaro("ω[zg.]/k[zg.]= "+Math.round(omega/kzg*Math.pow(10,6))/Math.pow(10.6)+" as/um",2,40,ctx1,DPmm); 			
+				fillTextkaro("ω[zg.]/k[zg.]= "+Math.round(omega/kzg*Math.pow(10,12))/Math.pow(10,12)+" as/μm",2,40,ctx1,DPmm); 			
+				fillTextkaro("ω[zg.]/k[sp.]= "+Math.round(omega/ksp*Math.pow(10,12))/Math.pow(10,12)+" as/μm",2,41,ctx1,DPmm); 			
+
+
+
+				//OTHER THINGS ZAREK 2
+				var omega2=2*Math.PI*fTHz2/Math.pow(10,6);      // rad/as
+				var lambda_zg2=c0/(fTHz*n1ray2*Math.pow(10,6));		// in micrometers
+				var lambda_sp2=c0/(fTHz*n2ray2*Math.pow(10,6));				
+				var kzg2=2*Math.PI/lambda_zg2;				  // / um
+				var ksp2=2*Math.PI/lambda_sp2;
+				
+				// GROUP VELOCITY
+				fillTextkaro("skupinska hitrost zgoraj= "+(omega2-omega)/(kzg2-kzg)*1000+" * 10"+String.fromCharCode(175)+String.fromCharCode(179)+" mrad/μm",2,45,ctx1,DPmm); 			
+				fillTextkaro("skupinska hitrost spodaj= "+(omega2-omega)/(ksp2-ksp)*1000+" * 10"+String.fromCharCode(175)+String.fromCharCode(179)+" mrad/μm",2,46,ctx1,DPmm); 			
+
 
 
 				ctx1.stroke();	
@@ -778,12 +870,12 @@ function calculate_border_phase(distance_travelled,lambda) {
 
 function pause_time() {
 	if (document.getElementById("button_pause").value==0) {		// When clicking UNPAUSE TIME
-		document.getElementById("button_pause").innerHTML="PAUSE TIME"
+		document.getElementById("button_pause").innerHTML="FREEZE TIME"
 		stopwatch1=t;															// Remember wheny ou clicked pause for the stopwatch
 		document.getElementById("button_pause").value=1;						
 		
 	} else {
-		document.getElementById("button_pause").innerHTML="UNPAUSE TIME"
+		document.getElementById("button_pause").innerHTML="UNFREEZE TIME"
 		document.getElementById("button_pause").value=0
 
 		//document.getElementById("value_timer").innerHTML=Math.floor(time_passed*1000)/1000;
@@ -854,24 +946,19 @@ function setThetaAngle(angle_deg) {
 
 <body onLoad="init();">
 
-<div id="div_top">
+
 
 A:<span id="test1">ready</span></br>
 B:<span id="test2">ready</span></br></br>
 C:<span id="test3">ready</span> <br /><br />
 
-<button id="button_reset" onclick="reset_time()">RESET TIME</button><br />
 FREQUENCY1: <span id="value_frequency1"></span>THz<input type="range" id="range_frequency1" min="100" max="900" value="460"> <br/>
 FREQUENCY2: <span id="value_frequency2"></span>THz<input type="range" id="range_frequency2" min="100" max="900" value="370"> <br/>
-
 THETA1: <span id="value_theta1"></span>°<input type="range" id="theta1" min="0" max="900" value="250">
 <button onclick="setThetaAngle(0)">Theta=0</button></br>	
 
-
-SPEED: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="40" value="20"><button id="button_pause" value="1" onclick="pause_time()">PAUSE</button></br>
 n1: <input type="range" id="range_n1" min="-100" max="300" value="160"><span id="value_n1"></span></br>
 n2: <input type="range" id="range_n2" min="-100" max="300" value="100"><span id="value_n2"></span></br>
-
 <br />
 
 
@@ -914,7 +1001,6 @@ n2: <input type="range" id="range_n2" min="-100" max="300" value="100"><span id=
 
 This dispersivity is linearly dependend of the frequency. the amount tells how much
 
-TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span> | Stopwatch: <span id="value_timer"></span> <br />
 Snakies: <input type="checkbox" id="markWaves" checked="1"> | Fronts: <input type="checkbox" id="markFronts" checked="1"> || Fields: <input type="checkbox" id="markFields" checked="1"> <br />
 <button id="button_totalref" onclick="findCriticalAngle();">Total reflection angle"</button>
 <button id="button_totalref" onclick="findBrewsterAngle();">Brewster angle"</button></br>
@@ -926,26 +1012,52 @@ Show reflected ray<input type="checkbox" id="showReflecterRay" checked="checked"
 
 P polarized wave <input type="range" id="range_polarisation" min="0" max="1" value="0">S polarized wave</br>
 
-<b> MONOCHROMATIC POLARIZED "narrow" plane TEM WAVE FALLING ON A NON MAGNETC NON-CONDUCTIVE MEDIUM WITH A FREQUENCY INDEPENDENT REFRACTIVE INDEX</b>
-
-<br /><br/>
 
 
+  
+  
+  
+<div class="row">	
+	<b> MONOCHROMATIC POLARIZED "narrow" plane TEM WAVE FALLING ON A NON MAGNETC NON-CONDUCTIVE MEDIUM WITH A FREQUENCY INDEPENDENT REFRACTIVE INDEX</b>
+</div>
+<!-- SIMULACIJA -->
+<div class="row">
 
+	<div class="column" id="levi">
+			<h2>SIMULACIJA</h2>
+			<button id="button_reset" onclick="reset_time()">t = 0</button>
+			<button id="button_pause" value="1" onclick="pause_time()">FREEZE TIME</button></br>
+			<b>Čas: <span id="value_time"></span></b> fs 10^-15s
+			| Stopwatch: <span id="value_timer"></span> <br />
+
+		<br />
+			HITROST: x<span id="value_speed"></span> <input type="range" id="range_speed" min="1" max="40" value="20">
+		<br />
+
+ </div>
+	
+	<div class="column" id="desni">    
+		<div id="zadej">
+			<!-- OZADJE SIMULACIJE -->
+			<canvas id="background_canvas"></canvas>
+		</div>		    
+		<div id="spredej">
+			<!--  SIMULACIJA -->
+			<canvas id="myCanvas">Your browser does not support the HTML5 canvas tag.</canvas>
+		</div>
+	</div>
+	
 </div>
 
+  
 
-<div id="div_bottom">
 
-	<div id="div_background">
-	<canvas id="background_canvas"></canvas>
-	</div>
 
-	<div id="div_animation">
-	<canvas id="myCanvas">
-	Your browser does not support the HTML5 canvas tag.</canvas>
-	</div>
-</div>
+
+
+
+
+	
 
 
 
