@@ -9,6 +9,8 @@ input[type="range"] {
   width:400px;
 }
 
+
+/*MAIN PAGE DIVIDERS*/
 #div_top {
   position: relative;
   border: 3px solid #73AD21;
@@ -17,7 +19,6 @@ input[type="range"] {
 #div_bottom {
  position: relative;
  border: 3px solid #73AA21;
-
  z-index: 0;
  display: flex;
  justify-content: center;
@@ -33,6 +34,24 @@ position: absolute;
 z-index: 2;
 }
 
+
+/*POPUPS*/
+
+.white_content {
+  display: none;
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  padding: 16px;
+  border: 16px solid orange;
+  background-color: white;
+  z-index: 1002;
+  overflow: auto;
+}
+
+/*MATH EQUATIONS - https://code-boxx.com/math-equations-html*/.. .. Not yet implemented
 </style>
 </head>
 
@@ -56,8 +75,8 @@ var wave1=[ftest,  5, Amp];
 var sampling=100; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
 var DPmm=50;												// DOTS PER MICROMETER (resolution).. Dont change this, it will get messy
 
-var xCenter1=300;											// Border between rays
-var yCenter1=360;
+var xCenter1=DPmm*6;											// Border between rays
+var yCenter1=DPmm*8.5;
 var canvasWidth=DPmm*24;
 var canvasHeight=canvasWidth*Math.sqrt(2);
 
@@ -95,6 +114,9 @@ var stopwatch2=0;
 var strk_style_before;
 
 // LOADS WITH THML
+
+// POPUPS:
+
 function init() {
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
@@ -113,7 +135,7 @@ function init() {
 		var num_squares_ver=Math.floor(canvasHeight/(DPmm/2)-6);
 		drawMathPaper(DPmm,DPmm,num_squares_hor,num_squares_ver,DPmm/2,ctx2);							// karo zvezek
 																										//	block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx
-	// WALLS
+	// PAPER FRAME
 		ctx2.setLineDash([]);						// Normals traight line
 		ctx2.beginPath();
 		ctx2.strokeStyle = '#585858';	
@@ -122,21 +144,36 @@ function init() {
 		
 	// 1 micrometer reference
 		ctx2.beginPath();
-		ctx2.strokeStyle = 'red';			
-		ctx2.rect(DPmm, DPmm*5/4, DPmm, 1);										
-	
-		ctx2.fillStyle = "green";
+		ctx2.strokeStyle = 'red';	
+		ctx2.rect(DPmm, DPmm*5/4, DPmm, 1);	
 		ctx2.font = "20px Lucida Console";
-		fillTextkaro("1um",3,1,ctx2,DPmm);
-		
-		// Single mode fibre core 9um
-		ctx2.rect(30, 30, 9*DPmm, 1);										// 1 micrometer reference
-		ctx2.fillText("9 micrometers - WIDTH OF SINGLEMODE OPTICAL FIBRE CORE", 500, 34);
+		fillTextkaro("1μm",3,1,ctx2,DPmm);
+		ctx2.stroke();
 
 		
-		ctx2.rect(0, yCenter1 , 1500, 2);									// Horizontal Line
-		ctx2.rect(xCenter1, 0, 2, 1500);										// Vertical line
+	// Single mode fibre core 9um
+		ctx2.beginPath();
+		ctx2.rect(DPmm, DPmm*7/4, 9*DPmm, 1);										// 1 micrometer reference
+		fillTextkaro(" 9μm - ŠIRINA JEDRA ENORODOVNEGA OPTIČNEGA VLAKNA",19,2,ctx2,DPmm);
 		ctx2.stroke();
+
+	//  LINES
+		ctx2.beginPath();
+		ctx2.strokeStyle = '#585858';	
+		drawCrossBorder(xCenter1,yCenter1,ctx2,DPmm);
+		drawCrossBorder(xCenter1+6*DPmm,yCenter1,ctx2,DPmm);
+		drawCrossBorder(xCenter1+12*DPmm,yCenter1,ctx2,DPmm);
+		ctx2.stroke();
+
+	// 1 micrometer reference
+		ctx2.beginPath();
+		ctx2.fillStyle = "red";							// FILLSTYLE FOR TEXT; STROKESTYLE FOR LINES
+		fillTextkaro("ŽAREK 1",9,5,ctx2,DPmm);	ctx2		// 4 desno, pet dol
+		fillTextkaro("ŽAREK 2",21,5,ctx2,DPmm);	ctx2
+		fillTextkaro("ŽAREK 1 + ŽAREK 2",31,5,ctx2,DPmm);	ctx2
+		ctx2.stroke();
+
+
 
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// Animated Canvas
@@ -154,6 +191,12 @@ function init() {
 // Places  text relative to the math square
 function fillTextkaro(tekst,kvadratek_x,kvadratek_y,ctx,DPmm) {
 	ctx.fillText(tekst, DPmm+(kvadratek_x-1)*DPmm/2+DPmm/20,DPmm+(kvadratek_y)*DPmm/2-DPmm/10);
+}
+
+function drawCrossBorder(x,y,ctx2,DPmm) {
+	var width=5.5
+	ctx2.rect(x-DPmm*width/2, y , DPmm*width, 2);		// Horizontal Line
+	ctx2.rect(x, y-DPmm*3, 2, DPmm*6);		// Vertical line
 }
 
 // FUNCTION THAT IS BEEING CALLED EVERY XYZ MILISECOND FOR ANIMATION
@@ -203,7 +246,7 @@ function draw(ctx1,canvas) {
 		// IS MEDIA DISPERSIVE; WHICH AND HOW?
 			// check which option is selected
 			var radios = document.getElementsByName('radio_dispersion');
-			var dispersitvity=document.getElementById('range_dispersion').value; 		// dispersitivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+			var dispersivity=document.getElementById('range_dispersion').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
 
 			for (var i = 0, length = radios.length; i < length; i++) {
 				// Non dispersive media
@@ -216,8 +259,8 @@ function draw(ctx1,canvas) {
 				
 				// TOP Media Dispersive
 				} else if (radios[1].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,dispersitvity);	
-					n1ray2=getDispersiveN(n1,fTHz2,dispersitvity);	
+					n1ray1=getDispersiveN(n1,fTHz,dispersivity);	
+					n1ray2=getDispersiveN(n1,fTHz2,dispersivity);	
 					n2ray1=n2;	
 					n2ray2=n2;	
 					break;
@@ -226,16 +269,16 @@ function draw(ctx1,canvas) {
 				} else if (radios[2].checked) {
 					n1ray1=n1;	
 					n1ray2=n1;
-					n2ray1=getDispersiveN(n2,fTHz,dispersitvity);		
-					n2ray2=getDispersiveN(n2,fTHz2,dispersitvity);	
+					n2ray1=getDispersiveN(n2,fTHz,dispersivity);		
+					n2ray2=getDispersiveN(n2,fTHz2,dispersivity);	
 					break;
 					
 				// BOTH Media Dispersive
 				} else if (radios[3].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,dispersitvity);	
-					n1ray2=getDispersiveN(n1,fTHz2,dispersitvity);	
-					n2ray1=getDispersiveN(n2,fTHz,dispersitvity);		
-					n2ray2=getDispersiveN(n2,fTHz2,dispersitvity);	
+					n1ray1=getDispersiveN(n1,fTHz,dispersivity);	
+					n1ray2=getDispersiveN(n1,fTHz2,dispersivity);	
+					n2ray1=getDispersiveN(n2,fTHz,dispersivity);		
+					n2ray2=getDispersiveN(n2,fTHz2,dispersivity);	
 					break;
 					
 				// Specially dispersive media on which all wavelenghts are the same
@@ -248,21 +291,16 @@ function draw(ctx1,canvas) {
 				}
 			}		
 	
-			// DRAW LABELS ON CANVAS
-			ctx1.beginPath();
-			ctx1.fillStyle = "green";
-			ctx1.font = "15px Arial";
-			ctx1.fillText("n1(" + fTHz + " THz) = "+n1ray1, xCenter1+30, yCenter1-300);
-			ctx1.fillText("n1(" + fTHz2 + " THz) = "+n1ray2, xCenter1+30, yCenter1-280);
-			ctx1.fillText("n2(" + fTHz + " THz) = "+n2ray1, xCenter1+30, yCenter1+280);
-			ctx1.fillText("n2(" + fTHz2 + " THz) = "+n2ray2, xCenter1+30, yCenter1+300);
-			ctx1.stroke();		
+	
 
 		// Left most 3 rays. Saving just for the summed wav. It's an array of 2 arrays
 		ctx1.beginPath();
+		ctx1.strokeStyle = "purple";
+		
+		// COLOR
+		
 		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1ray1,n2ray1,ctx1);
 		ctx1.stroke();
-
 
 		// Middle 3 rays ray
 		ctx1.beginPath();
@@ -270,15 +308,65 @@ function draw(ctx1,canvas) {
 		ctx1.stroke();
 		// Sum of leftmost and middle ray. Needs raylength to get starting position	
 
-
 		// RIGHT MOST RAY = RAY 1 + RAY 2
 		ctx1.beginPath();
 		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
 		ctx1.stroke();
+		
+		
+		
+		// DRAW LABELS ON CANVAS
+			// REFRACTIVE INDEX
+			ctx1.beginPath();
+			ctx1.fillStyle = "green";
+			ctx1.font = "bold 15px Lucida Console";
+			fillTextkaro("n1(" + fTHz + "THz)= "+Math.round(n1ray1*100)/100,1,4,ctx1,DPmm) 
+			fillTextkaro("n1(" + fTHz2 + "THz)= "+Math.round(n1ray2*100)/100,1,5,ctx1,DPmm) 
+			fillTextkaro("n2(" + fTHz + " THz)= "+Math.round(n2ray1*100)/100,1,17,ctx1,DPmm) 
+			fillTextkaro("n2(" + fTHz2 + " THz)= "+Math.round(n2ray2*100)/100,1,18,ctx1,DPmm) 
+			ctx1.stroke();	
+			
+			
+			if (1==1) { 	//Disabling of too much
+				//OTHER THINGS
+				var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
+				var c0zg=c0/n1ray1;
+				var c0sp=c0/n2ray1;
+				var lambda_zg=c0/(fTHz*n1ray1*Math.pow(10,6));		// in micrometers
+				var lambda_sp=c0/(fTHz*n2ray1*Math.pow(10,6));
+				var omega=2*Math.PI*fTHz/Math.pow(10,6);      // rad/as
+				var kzg=2*Math.PI/lambda_zg;				  // / um
+				var ksp=2*Math.PI/lambda_sp;
+
+				ctx1.beginPath();
+				ctx1.fillStyle = "black";
+				ctx1.font = "bold 22px Lucida Console";
+				fillTextkaro("f = "+fTHz+" THz",2,30,ctx1,DPmm) 		
+				
+				fillTextkaro("c[zg.]= "+Math.round(c0/n1ray1)+"μm/as",2,31,ctx1,DPmm);
+				fillTextkaro("c[sp.]= "+Math.round(c0/n2ray1)+"μm/as",2,32,ctx1,DPmm);
+				
+				fillTextkaro("λ[zg.]= "+Math.round((c0/(fTHz*n1ray1*Math.pow(10,6)))*1000)/1000+" μm",2,33,ctx1,DPmm);  // 2PI * f * n / c
+				fillTextkaro("λ[sp.]= "+Math.round((c0/(fTHz*n2ray1*Math.pow(10,6)))*1000)/1000+" μm",2,34,ctx1,DPmm); 
+				
+				fillTextkaro("k[zg.]= "+Math.round((kzg)*1000)/1000+" rad/μm",2,35,ctx1,DPmm);  
+				fillTextkaro("k[sp.]= "+Math.round((ksp)*1000)/1000+" rad/μm",2,36,ctx1,DPmm);  
+
+				fillTextkaro("ω[zg.]= "+Math.round(omega*1000*1000)/1000+" mrad/as",2,37,ctx1,DPmm);  
+				fillTextkaro("ω[sp.]= "+Math.round(omega*1000*1000)/1000+" mrad/as",2,38,ctx1,DPmm); 
+				
+				fillTextkaro("ω[zg.]/k[zg.]= "+Math.round(omega/kzg*Math.pow(10,6))/Math.pow(10.6)+" as/um",2,40,ctx1,DPmm); 			
+
+
+				ctx1.stroke();	
+			}
+
+		
 };
 
-function getDispersiveN(n,fTHz,dispersitvity) {
-	return (n+((fTHz-300)/300)*dispersitvity);
+function getDispersiveN(n,fTHz,dispersivity) {
+	return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
+
 }
 
 function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
@@ -785,14 +873,45 @@ n1: <input type="range" id="range_n1" min="-100" max="300" value="160"><span id=
 n2: <input type="range" id="range_n2" min="-100" max="300" value="100"><span id="value_n2"></span></br>
 
 <br />
-Dispersion [1 for non-dispersive media]: <input type="range" id="range_dispersion" min="1" max="10" value="1"><span id="value_randgedispersion"></span></br>
-<input type="radio"name="radio_dispersion" checked="checked" value="0">	Both media not dispersive </input><br>
-<input type="radio"name="radio_dispersion" value="1">						Top media dispersive </input><br>
-<input type="radio"name="radio_dispersion" value="2">						Bottom media dispersive </input><br>
-<input type="radio"name="radio_dispersion" value="3">						Both dispersive </input><br>
-<input type="radio"name="radio_dispersion" value="4">						Media2: n2=const./fTHZ - inversly corelated to frequency - all the waves will end up having the same wavelength </input><br>
 
-<br /><br />
+
+
+
+
+
+<!-- Dispersivity -->
+  <span
+    onMouseOver="document.getElementById('light').style.display='block'" 
+    onMouseOut="document.getElementById('light').style.display='none'"
+    >
+      Dispersivity
+  </span>
+  
+  <span id="light" class="white_content">
+	Dispersivity is a made-up property of a fictional material (could be real, I have no idea). It tell how much the change of frequency changes the
+	refraction index for that frequency.  By default, the equation to calculate n is: 
+		<br />
+		<br />
+		<span align="center"> n+((fTHz-300)/300)*dispersivity. </span>
+		<br />
+		<br />
+
+	
+	
+  </span>
+
+	<input type="range" id="range_dispersion" min="1" max="10" value="1"><span id="value_randgedispersion"></span></br>
+	<input type="radio"name="radio_dispersion" checked="checked" value="0">	Both media not dispersive </input><br>
+	<input type="radio"name="radio_dispersion" value="1">						Top media dispersive </input><br>
+	<input type="radio"name="radio_dispersion" value="2">						Bottom media dispersive </input><br>
+	<input type="radio"name="radio_dispersion" value="3">						Both dispersive </input><br>
+	<input type="radio"name="radio_dispersion" value="4">						Media2: n2=const./fTHZ - inversly corelated to frequency - all the waves will end up having the same wavelength </input><br>
+
+	<br /><br />
+
+
+
+
 This dispersivity is linearly dependend of the frequency. the amount tells how much
 
 TIME: [femtoseconds (10^-15) ]  <span id="value_time"></span> | Stopwatch: <span id="value_timer"></span> <br />
@@ -807,7 +926,7 @@ Show reflected ray<input type="checkbox" id="showReflecterRay" checked="checked"
 
 P polarized wave <input type="range" id="range_polarisation" min="0" max="1" value="0">S polarized wave</br>
 
-<b>MONOCHROMATIC POLARIZED WAVE FALLING ON A NON MAGNETC NON-CONDUCTIVE MEDIUM WITH A FREQUENCY INDEPENDENT REFRACTIVE INDEX</b>
+<b> MONOCHROMATIC POLARIZED "narrow" plane TEM WAVE FALLING ON A NON MAGNETC NON-CONDUCTIVE MEDIUM WITH A FREQUENCY INDEPENDENT REFRACTIVE INDEX</b>
 
 <br /><br/>
 
