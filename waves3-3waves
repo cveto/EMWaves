@@ -66,7 +66,10 @@ input[type="range"] {
 		  z-index: 10;
 		}
 
-
+/* */
+#test_canvas {
+  visibility: hidden;
+}
 
 
 
@@ -198,13 +201,6 @@ function init() {
 			} 
 		}
 
-
-
-
-
-	
-	
-	
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
 	document.getElementById("markFronts").checked=0;
@@ -291,7 +287,11 @@ function draw(ctx1,canvas) {
 
 	// BEGIN DRAWING ON THE CANVAS
 		ctx1.clearRect(0,0, canvas.width,canvas.height);									// CLEAR CANVAS
-		
+	
+    //---- SET SIMULATION SAMPLING
+			sampling=document.getElementById("range_sampling").value;			// SETS GLOBAL VARIABLE
+			document.getElementById("value_sampling").innerHTML=sampling;
+	
 	//---- TIME INFO ----
 		// GET SPEED FROM USER, APPLY SPEED, SHOW USER WHAT SPEED IS CURRENTLY IN THE RUN
 			slowdown_factor=document.getElementById("range_speed").value;
@@ -414,7 +414,7 @@ function draw(ctx1,canvas) {
 			ctx1.stroke();	
 			
 			
-			if (1==1) { 	//Disabling of too much
+			if (document.getElementById("showCalculations").checked==1) { 	//Disabling of too much
 				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
 				//OTHER THINGS ZAREK 1
 				var c0=299792458*Math.pow(10,-9);									// Speed of light - micrometers per femtoseconds
@@ -425,10 +425,14 @@ function draw(ctx1,canvas) {
 				var omega1=2*Math.PI*fTHz/Math.pow(10,3);      						// rad/fs
 				var kzg1=2*Math.PI/lambda_zg1;				  		// rad/um
 				var ksp1=2*Math.PI/lambda_sp1;
-				var pozY1=33;
+				var pozY1=35;
 				var pozX1=2;
 				var criticalAngle1=findCriticalAngle(n1ray1,n2ray1);
 				var brewsterAngle1=findBresterAngle(n1ray1,n2ray1);
+				var theta1deg=document.getElementById("theta1").value/10;
+				var theta1rad=theta1deg*Math.PI/180;
+				var reflectance1P=calculateReflectance(n1ray1,n2ray1,theta1rad,0);
+				var reflectance1S=calculateReflectance(n1ray1,n2ray1,theta1rad,1);
 				
 				// HTML INFORMING FOR BUTTON
 				if (isNaN(criticalAngle1)) {	
@@ -438,15 +442,19 @@ function draw(ctx1,canvas) {
 				}
 				
 				ctx1.beginPath();
-				ctx1.fillStyle = "black";
+				ctx1.fillStyle = "#303030";
 				ctx1.font = "bold 22px Lucida Console";
 				
-				
-				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX1,pozY1-5,ctx1,DPmm); 	
-				fillTextkaro("ΘB = "+brewsterAngle1+"°",pozX1,pozY1-4,ctx1,DPmm); 	
-				fillTextkaro("ΘC = "+criticalAngle1+"°",pozX1,pozY1-3,ctx1,DPmm); 								
-				
-				fillTextkaro("f[žar.1] = "+fTHz+" THz",pozX1,pozY1-1,ctx1,DPmm) 		
+					
+					
+				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX1,pozY1-8,ctx1,DPmm); 	
+				fillTextkaro("ΘB = "+brewsterAngle1+"°",pozX1,pozY1-7,ctx1,DPmm); 	
+				fillTextkaro("ΘC = "+criticalAngle1+"°",pozX1,pozY1-6,ctx1,DPmm); 								
+
+				fillTextkaro("Ts = "+Math.round(reflectance1S*1000)/1000,pozX1,pozY1-5,ctx1,DPmm); 
+				fillTextkaro("Tp = "+Math.round(reflectance1P*1000)/1000,pozX1,pozY1-4,ctx1,DPmm); 
+
+				fillTextkaro("f[žar.1] = "+fTHz+" THz",pozX1,pozY1-2,ctx1,DPmm) 		
 				
 				fillTextkaro("c[zg.]= "+(c0zg1).toFixed(9)+" μm/fs",pozX1,pozY1,ctx1,DPmm);
 				fillTextkaro("c[sp.]= "+(c0sp1).toFixed(9)+" μm/fs",pozX1,pozY1+1,ctx1,DPmm);
@@ -480,17 +488,21 @@ function draw(ctx1,canvas) {
 				var pozX2=26
 				var criticalAngle2=findCriticalAngle(n1ray2,n2ray2);
 				var brewsterAngle2=findBresterAngle(n1ray2,n2ray2);
-
+				//var theta2deg=document.getElementById("theta2").value/10;
+				//var theta2rad=theta2deg*Math.PI/180;
+				var reflectance2P=calculateReflectance(n1ray2,n2ray2,theta1rad,0);
+				var reflectance2S=calculateReflectance(n1ray2,n2ray2,theta1rad,1);
+				var messageGroupVelocity="Rezultat smiselen le, če w1 ≈ w2 in k1 ≈ k2  oziroma B < f";
 				
-				ctx1.beginPath();
-				ctx1.fillStyle = "black";
-				ctx1.font = "bold 22px Lucida Console";
 				
-				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX2,pozY1-5,ctx1,DPmm); 	
-				fillTextkaro("ΘB = "+brewsterAngle2+"°",pozX2,pozY1-4,ctx1,DPmm); 					
-				fillTextkaro("ΘC = "+criticalAngle2+"°",pozX2,pozY1-3,ctx1,DPmm); 								
+				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX2,pozY1-8,ctx1,DPmm); 
+				fillTextkaro("ΘB = "+brewsterAngle2+"°",pozX2,pozY1-7,ctx1,DPmm); 					
+				fillTextkaro("ΘC = "+criticalAngle2+"°",pozX2,pozY1-6,ctx1,DPmm); 								
 				
-				fillTextkaro("f[žar.2] = "+fTHz2+" THz",pozX2,pozY1-1,ctx1,DPmm) 		
+				fillTextkaro("Ts = "+Math.round(reflectance2S*1000)/1000,pozX2,pozY1-5,ctx1,DPmm); 
+				fillTextkaro("Tp = "+Math.round(reflectance2P*1000)/1000,pozX2,pozY1-4,ctx1,DPmm); 				
+				
+				fillTextkaro("f[žar.2] = "+fTHz2+" THz",pozX2,pozY1-2,ctx1,DPmm) 		
 				
 				fillTextkaro("c[zg.]= "+(c0zg2).toFixed(9)+" μm/fs",pozX2,pozY1,ctx1,DPmm);
 				fillTextkaro("c[sp.]= "+(c0sp2).toFixed(9)+" μm/fs",pozX2,pozY1+1,ctx1,DPmm);
@@ -521,7 +533,7 @@ function draw(ctx1,canvas) {
 					group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
 				}
 
-
+				fillTextkaro(messageGroupVelocity,5,52,ctx1,DPmm); 			
 				fillTextkaro("Δω[zg.]/Δk[zg.]= "+group_speed_top.toFixed(9)+" μm/as",5,53,ctx1,DPmm); 			
 				fillTextkaro("Δω[zg.]/Δk[sp.]= "+group_speed_bot.toFixed(9)+" μm/as",5,54,ctx1,DPmm); 
 				
@@ -536,7 +548,34 @@ function draw(ctx1,canvas) {
 
 function getDispersiveN(n,fTHz,dispersivity) {
 	return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
+}
 
+function calculateReflectance(n1,n2,thetaRad,pol_choice) {
+		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
+		// This is for E field on s plane, for power it has to be.. squared
+		// IT depends on polarization on the incoming wave
+				// Sneels Law
+
+		var thetaRefr=Math.asin(Math.sin(thetaRad)*n1/n2);								// ANGLE OF REFLECTED RAY
+		
+		if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
+			var RpTOP=n1*Math.cos(thetaRefr) - n2*Math.cos(thetaRad);
+			var RpBOT=n1*Math.cos(thetaRefr) + n2*Math.cos(thetaRad);
+			var Rp=Math.pow(RpTOP/RpBOT,2);
+			var R=Rp;
+			var T=1-Rp;	
+			
+		} else if (pol_choice==1) {
+			var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(thetaRefr);
+			var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(thetaRefr);
+			var Rs=Math.pow(RsTOP/RsBOT,2);										
+			var R=Rs;
+			var T=1-Rs;												// E field amplitude reduced by?		
+		} else {
+			alert("I dun goffed! Something wrong with the choice of polarisation in the code");
+		}
+	
+	return T;
 }
 
 function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
@@ -1000,7 +1039,7 @@ function findCriticalAngle(n1,n2) {
 		if (isNaN(criticalAngle)) {	
 			//alert("No Critical Agnle exists");
 		} 
-	var criticalAngleDeg=Math.ceil((criticalAngle*180/Math.PI));
+	var criticalAngleDeg=Math.ceil((criticalAngle*180/Math.PI)*10)/10;
 	return criticalAngleDeg;
 }
 
@@ -1054,6 +1093,37 @@ function setFrequencyRay1(fTHz) {
 	document.getElementById("range_frequency1").value=fTHz;
 }
 
+
+// DOWNLOAD CANVASES https://stackoverflow.com/questions/29551841/merge-multiple-canvases-and-download-as-image
+// https://stackoverflow.com/questions/11112321/how-to-save-canvas-as-png-image
+function downloadCanvas() {
+
+
+	var canvas = document.getElementById("test_canvas");
+	canvas.width=canvasWidth;
+	canvas.height=canvasHeight;
+	
+	var ctx = canvas.getContext("2d");
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+
+
+  var backgroundCanvas = document.getElementById('background_canvas');
+  var whiteCanvas = document.getElementById('test_canvas');
+  var animatedCanvas = document.getElementById('myCanvas');
+
+  var bottleContext = whiteCanvas.getContext('2d');
+  bottleContext.drawImage(backgroundCanvas, 0, 0);
+  bottleContext.drawImage(animatedCanvas, 0, 0);
+
+  var dataURL = whiteCanvas.toDataURL("image/png");
+  var link = document.createElement('a');
+  link.download = "bottle-design.png";
+  link.href = whiteCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+  link.click();
+}
 </script>
 
 <body onLoad="init();">
@@ -1096,6 +1166,12 @@ TEST C:<span id="test3">ready</span> <br />
 		<br />
 		
 		<br />
+			Število vzorcev na mikrometer:<span id="value_sampling"></span> <br />
+			<input type="range" id="range_sampling" min="1" max="300" value="100">
+		<br />
+
+		
+		<br />
 			DOLŽINA LOMNEGA ŽARKA:<span id="value_refracted_raylenght"></span> <br />
 			<input type="range" id="range_refracted_raylenght" min="1" max="23" value="7">
 		<br />
@@ -1103,6 +1179,10 @@ TEST C:<span id="test3">ready</span> <br />
 
 		<br />
 		Show reflected ray<input type="checkbox" id="showReflecterRay" checked="checked"> 
+		<br />
+		
+		<br />
+		Prikaži izračune: <input type="checkbox" id="showCalculations" checked="checked"> 
 		<br />
 
 
@@ -1175,7 +1255,7 @@ TEST C:<span id="test3">ready</span> <br />
 		<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 		<h2>BLIŽNJICE</h2>
 				
-				
+		<button onclick="downloadCanvas()"> DOWNLOAD CANVAS AS IOMAEG </button>
 				
 
 
@@ -1200,7 +1280,7 @@ TEST C:<span id="test3">ready</span> <br />
 	
 </div>
 
-  
+  <canvas id="test_canvas"></canvas>
 
 
 
