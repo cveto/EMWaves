@@ -1320,11 +1320,9 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
 
 // FUNCTION JUST FOR PRESENTATION PURPOSES
 // -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-function setSignalSimulationParameters(reset_time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2) {
+function setSignalSimulationParameters(time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2) {
 
-	if (reset_time) {
-		t=0;
-	}
+t=time*1000;
 
 document.getElementById("radio_id_manual").checked=radio_id_manual
 document.getElementById("markFronts").checked=markFronts
@@ -1512,8 +1510,19 @@ TEST C:<span id="test3">ready</span> <br />
 				
 				
 				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
-				<button onclick="setSignalSimulationParameters(0,1,1,1,23,446,370,0,105,115,149)"> Negativna skupinska hitrost1</button><br />
-				<button onclick="setSignalSimulationParameters(0,1,1,1,23,446,330,0,105,133,157)"> Skupinska hitrost višja od fazne</button><br />
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149)"> Negativna skupinska hitrost1, sk>c0</button><br />
+				
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
+
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101)"> Fazna hitrost pol višja od skupinske</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
+
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
+				
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157)"> Skupinska hitrost višja od fazne</button><br />				
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,133,157)"> Skupinska hitrost višja od fazne in c0</button><br />
+
+
 				<button onclick="setGroupVelocityHigehrThanPhaseVelocity()"> </button>
 
 				
