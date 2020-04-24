@@ -372,6 +372,11 @@ function draw(ctx1,canvas) {
 		n2=document.getElementById("range_n2").value/100;
 		document.getElementById("value_n2").innerHTML=n2;
 
+		// Material below for ray 2 if enabled
+		n2z2=document.getElementById("range_n2z2").value/100;
+		document.getElementById("value_n2z2").innerHTML=n2z2;
+
+
 		// IS MEDIA DISPERSIVE; WHICH AND HOW?
 			// check which option is selected
 			var radios = document.getElementsByName('radio_dispersion');
@@ -416,6 +421,13 @@ function draw(ctx1,canvas) {
 					n1ray2=n1;	
 					n2ray1=500/fTHz;
 					n2ray2=500/fTHz2;	
+					break;
+				// If we want to set n for ray 1 and ray 2 separately
+				} else if (radios[5].checked) {
+					n1ray1=n1;
+					n1ray2=n1;	
+					n2ray1=n2;
+					n2ray2=n2z2;	
 					break;
 				}
 			}		
@@ -473,7 +485,7 @@ function draw(ctx1,canvas) {
 				var theta1rad=theta1deg*Math.PI/180;
 				var reflectance1P=calculateReflectance(n1ray1,n2ray1,theta1rad,0);
 				var reflectance1S=calculateReflectance(n1ray1,n2ray1,theta1rad,1);
-				var pozY1=32;
+				var pozY1=30;
 				var pozX1=2;
 				
 				// HTML INFORMING FOR BUTTON
@@ -499,15 +511,15 @@ function draw(ctx1,canvas) {
 				fillTextkaro("Tp = "+Math.round(reflectance1P*1000)/1000,pozX1,pozY1+7,ctx1,DPmm); 
 				
 				// MEDIUM ON TOP
-				fillTextkaro("c[\u21D1]= "+(c0zg1).toFixed(9)+" μm/fs",pozX1,pozY1+9,ctx1,DPmm);
+				fillTextkaro("c[\u21D1]= "+(c0zg1).toFixed(9)+" μm/fs = "+(1/n1ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+9,ctx1,DPmm);
 				fillTextkaro("λ[\u21D1]= "+lambda_zg1.toFixed(3)+" μm",pozX1,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
 				fillTextkaro("k[\u21D1]= "+kzg1.toFixed(3)+" rad/μm",pozX1,pozY1+11,ctx1,DPmm);  
 				fillTextkaro("ω[\u21D1]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+12,ctx1,DPmm);  
 				fillTextkaro("ω/k[\u21D1]= "+(omega1/kzg1).toFixed(9)+" μm/fs",pozX1,pozY1+13,ctx1,DPmm); 			
 
-				
+
 				// MEDIUM ON BOTTOM
-				fillTextkaro("c[\u2B07]= "+(c0sp1).toFixed(9)+" μm/fs",pozX1,pozY1+15,ctx1,DPmm);	
+				fillTextkaro("c[\u2B07]= "+(c0sp1).toFixed(9)+" μm/fs = "+(1/n2ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+15,ctx1,DPmm);	
 				fillTextkaro("λ[\u2B07]= "+lambda_sp1.toFixed(3)+" μm",pozX1,pozY1+16,ctx1,DPmm); 
 				fillTextkaro("k[\u2B07]= "+ksp1.toFixed(3)+" rad/μm",pozX1,pozY1+17,ctx1,DPmm); 
 				fillTextkaro("ω[\u2B07]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+18,ctx1,DPmm);
@@ -527,7 +539,7 @@ function draw(ctx1,canvas) {
 				var omega2=2*Math.PI*fTHz2/Math.pow(10,3);      					// rad/fs
 				var kzg2=2*Math.PI/lambda_zg2;				  						// rad/um
 				var ksp2=2*Math.PI/lambda_sp2;
-				var pozX2=28
+				var pozX2=27
 				var criticalAngle2=findCriticalAngle(n1ray2,n2ray2);
 				var brewsterAngle2=findBresterAngle(n1ray2,n2ray2);
 				//var theta2deg=document.getElementById("theta2").value/10;
@@ -548,37 +560,56 @@ function draw(ctx1,canvas) {
 				fillTextkaro("Tp = "+Math.round(reflectance2P*1000)/1000,pozX2,pozY1+7,ctx1,DPmm); 				
 				
 				// MEDIUM ON TOP
-				fillTextkaro("c[\u21D1]= "+(c0zg2).toFixed(9)+" μm/fs",pozX2,pozY1+9,ctx1,DPmm);
+				fillTextkaro("c[\u21D1]= "+(c0zg2).toFixed(9)+" μm/fs = "+(1/n1ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+9,ctx1,DPmm);
 				fillTextkaro("λ[\u21D1]= "+lambda_zg2.toFixed(3)+" μm",pozX2,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
 				fillTextkaro("k[\u21D1]= "+kzg2.toFixed(3)+" rad/μm",pozX2,pozY1+11,ctx1,DPmm);  
 				fillTextkaro("ω[\u21D1]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+12,ctx1,DPmm);  
 				fillTextkaro("ω/k[\u21D1]= "+(omega2/kzg2).toFixed(9)+" μm/fs",pozX2,pozY1+13,ctx1,DPmm); 			
 				
-				fillTextkaro("c[\u2B07]= "+(c0sp2).toFixed(9)+" μm/fs",pozX2,pozY1+15,ctx1,DPmm);
+				// MEDIUM ON BOTTOM
+				fillTextkaro("c[\u2B07]= "+(c0sp2).toFixed(9)+" μm/fs = "+(1/n2ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+15,ctx1,DPmm);
 				fillTextkaro("λ[\u2B07]= "+lambda_sp2.toFixed(3)+" μm",pozX2,pozY1+16,ctx1,DPmm); 
 				fillTextkaro("k[\u2B07]= "+ksp2.toFixed(3)+" rad/μm",pozX2,pozY1+17,ctx1,DPmm); 
 				fillTextkaro("ω[\u2B07]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+18,ctx1,DPmm); 
 				fillTextkaro("ω/k[\u2B07]= "+(omega2/ksp2).toFixed(9)+" μm/fs",pozX2,pozY1+19,ctx1,DPmm); 			
 
 
-				//OTHER THINGS SKUPINSKA HITROST
-				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-				var group_speed_top=(omega2-omega1)/(kzg2-kzg1);
-				var group_speed_bot=(omega2-omega1)/(ksp2-ksp1);
+				//OTHER THINGS SKUPINSKA HITROST SEŠTETI ŽAREK
+				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+				
+				var deltaomegasp=omega2-omega1;
+				var deltaksp=ksp2-ksp1;
+				var group_speed_bot=deltaomegasp/deltaksp;
+				var c0toGroupSpeedBot=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
 				
-				if (isNaN(parseFloat("group_speed_top"))) {
-					group_speed_top=c0zg1;					// The zero divided by zero, this means that it's the same signal summed twice
-				}
+				var deltaomegazg=omega2-omega1;
+				var deltakzg=kzg2-kzg1;				
+				var group_speed_top=deltaomegazg/deltakzg;				
+				var c0toGroupSpeedTop=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
+
 				
-				if (isNaN(parseFloat("group_speed_bot"))) {
-					group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
-				}
+				
+		//		if (isNaN(parseFloat("group_speed_top"))) {
+		//			group_speed_top=c0zg1;					// The zero divided by zero, this means that it's the same signal summed twice
+		//		}
+		//		
+		//		if (isNaN(parseFloat("group_speed_bot"))) {
+		//			group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
+		//		}
 
 				fillTextkaro("SEŠTETI ŽAREK:",pozX1+2,pozY1+21,ctx1,DPmm); 
-				fillTextkaro(messageGroupVelocity,pozX1+2,pozY1+22,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/as",pozX1+2,pozY1+23,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/as",pozX1+2,pozY1+24,ctx1,DPmm); 
 				
+				fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY1+24,ctx1,DPmm); 			
+				fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY1+25,ctx1,DPmm); 
+
+				fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY1+24,ctx1,DPmm); 			
+				fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY1+25,ctx1,DPmm); 
+				
+
+				fillTextkaro(messageGroupVelocity,pozX1+2,pozY1+22,ctx1,DPmm); 			
+				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY1+28,ctx1,DPmm); 			
+				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY1+29,ctx1,DPmm); 
+			
+
 
 
 
@@ -1312,9 +1343,14 @@ TEST C:<span id="test3">ready</span> <br />
 					<input type="range" id="range_n1" min="-10" max="300" value="160"></br>
 					
 					<b>Lomni količnik spodnjega medija: n2:</b> <span id="value_n2"></span> <br>
-					
 					<input type="range" id="range_n2" min="10" max="300" value="100"></br>
-					<br />
+					<br />			
+
+					<b>Lomni količnik spodnjega medija za žarek 2: n2z2:</b> <span id="value_n2z2"></span> <br>
+					<input type="range" id="range_n2z2" min="10" max="300" value="100"></br>
+			
+					
+					
 					
 				<!-- Dispersivity -->
 				  <span onMouseOver="document.getElementById('popup_dispersitivity').style.display='block'" onMouseOut="document.getElementById('popup_dispersitivity').style.display='none'">
@@ -1333,8 +1369,10 @@ TEST C:<span id="test3">ready</span> <br />
 						<span onMouseOver="document.getElementById('popup_specialmedia').style.display='block'" onMouseOut="document.getElementById('popup_specialmedia').style.display='none'">
 							<b>Poseben namišljeni medij ??</b>
 						</span>
-					</input>
-						
+					</input><br>
+					<input type="radio"name="radio_dispersion" value="5">					ROČNO NASTAVI N</input><br>
+
+				
 				
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
