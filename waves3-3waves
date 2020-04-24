@@ -671,7 +671,7 @@ function draw(ctx1,canvas) {
 				fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY3+3,ctx1,DPmm); 
 				
 
-				fillTextkaro(messageGroupVelocity,pozX1+2,pozY3+22,ctx1,DPmm); 			
+				fillTextkaro(messageGroupVelocity,pozX1+10,pozY3,ctx1,DPmm); 			
 				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+6,ctx1,DPmm); 			
 				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+7		,ctx1,DPmm); 
 			
