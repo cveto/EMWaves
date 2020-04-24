@@ -47,9 +47,10 @@ input[type="range"] {
 		
 		#desni {
 		  width: 1200px;
-		  height: 1800px;
+		  height: 1700px;
 		  float: left;
 		  position: relative;
+		  background-color: #FFFAF0;
 		  /*border: 3px solid #73AD21;*/
 		}
 
@@ -121,19 +122,20 @@ input[type="range"] {
 // CONSTANTS		
 var c0mmpatts=299792458*Math.pow(10,9)						// Speed of light - micrometers per atoseconds
 
-
 // SIGNAL			
 var fgreen=565;												// THz 10^12	green color median frequency
 var fred=442.5;												// THz 10^12	red   color median frequency
 var fblue=640;												// THz 10^12	blue  color median frequency
 var ftest=299.792458;										// freqency at which wavelength is exzactly 1 micrometer and its period is 3335.640952 attoseconds		
-var Amp = 20;												// Just to make it look presentable on the canvas.
+var Amp = 30;												// Just to make it look presentable on the canvas.
 var wave1=[ftest,  5, Amp];									
 
 		
 // CANVAS VARIABLES		
 var sampling=100; 											// SAMPLES PER MICROMETER. This has nothing to do with presentation on the screen
 var DPmm=50;												// DOTS PER MICROMETER (resolution).. Dont change this, it will get messy
+var fieldsWidth=DPmm*5;											// For the field view, how much interference can I see?
+var pixelSize=1.5;
 
 var xCenter1=DPmm*6;											// Border between rays
 var yCenter1=DPmm*8.5;
@@ -173,6 +175,10 @@ var stopwatch2=0;
 // PLAYGROUND
 var strk_style_before;
 var timedown;
+
+// LINES
+var startXpoints;
+var startYpoints;
 // LOADS WITH THML
 
 // POPUPS:
@@ -235,9 +241,9 @@ function init() {
 
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
-	document.getElementById("markFronts").checked=1;
+	document.getElementById("markFronts").checked=0;
 	document.getElementById("markFields").checked=0;
-	document.getElementById("markWaves").checked=0;
+	document.getElementById("markPoins").checked=1;
 	
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// Backround Canvas
@@ -323,6 +329,11 @@ function draw(ctx1,canvas) {
     //---- SET SIMULATION SAMPLING
 			sampling=document.getElementById("range_sampling").value;			// SETS GLOBAL VARIABLE
 			document.getElementById("value_sampling").innerHTML=sampling;
+
+    //---- SET SIMULATION DOT SIZE
+			pixelSize=document.getElementById("range_dotSize").value/100;			// SETS GLOBAL VARIABLE
+			document.getElementById("value_dotSize").innerHTML=pixelSize;	
+	
 	
 	//---- TIME INFO ----
 		// GET SPEED FROM USER, APPLY SPEED, SHOW USER WHAT SPEED IS CURRENTLY IN THE RUN
@@ -346,8 +357,9 @@ function draw(ctx1,canvas) {
 			ctx1.lineWidth = 3;
 			drawLineWithArrows(0.5*DPmm,4*DPmm,2*DPmm,5.5*DPmm,15,15,false,true,ctx1)		// Carefu, strok inside already
 			ctx1.stroke();
-			
-				
+						
+
+
 			if (document.getElementById("range_polarisation").value==0) {
 				ctx1.beginPath();
 				ctx1.strokeStyle = 'red';	
@@ -472,24 +484,23 @@ function draw(ctx1,canvas) {
 	
 
 		// Left most 3 rays. Saving just for the summed wav. It's an array of 2 arrays
-		ctx1.beginPath();
-		ctx1.strokeStyle = "purple";
+		//ctx1.beginPath();  // SO it calculates all before stroking. but that means no color change.
 		
-		// COLOR
-		
-		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,15,n1ray1,n2ray1,ctx1);
-		ctx1.stroke();
+		//ctx1.strokeStyle = "purple";
+		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,Amp,n1ray1,n2ray1,ctx1);
+		//ctx1.stroke();
 
 		// Middle 3 rays ray
-		ctx1.beginPath();
-		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,15,n1ray2,n2ray2,ctx1);		
-		ctx1.stroke();
+		//ctx1.beginPath();
+		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,Amp,n1ray2,n2ray2,ctx1);		
+		//ctx1.stroke();
 		// Sum of leftmost and middle ray. Needs raylength to get starting position	
 
 		// RIGHT MOST RAY = RAY 1 + RAY 2
-		ctx1.beginPath();
+		//ctx1.beginPath();
 		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
-		ctx1.stroke();
+		
+		//ctx1.stroke();
 		
 		
 		
@@ -873,14 +884,17 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay)
 	
 	
 	// THIS SIMULATES WAVE IS APPROACHING TO THE SUFACE.
-	
 	if (t<=raytime+tdelay)	{
 		var how_many_samples=(t-tdelay)*sampling*c0mmpatts/n			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
 	} else {
 		var how_many_samples=sampling*raylength;			// if 12 micrometers, then 12*sampling
 	}
 	
-	for (var i=0;i<=how_many_samples;++i) {	// All is relative to wavelenght
+	// STARTING TO PUT PREPARE DOTS FOR CANVAS
+	ctx1.beginPath();
+	ctx1.moveTo(xStart,yStart);	
+	
+	for (var i=0;i<=how_many_samples;++i) {
 
 		// SAMPLING SIZE - this represent the wave from 
 		var x=i*1/sampling;							
@@ -896,12 +910,24 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay)
 		array_wave[i]=f1;
 		//--------------------
 		
-		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		//putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX THIS HAD TO BE DONE, because I can't stop line...
+
+		if(document.getElementById("markPoins").checked == '1'){	
+			putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		} else if(document.getElementById("markFronts").checked == '1'){	
+			putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
+		} else if(document.getElementById("markFields").checked == '1'){
+			ctx1.globalAlpha = 0.5;		
+			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		}
 		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		// Returns the whole wave it just made
 	}
+	
+	// STROKING THOSE DOTS!! - this is how canvas works.. easier on machine to prepare dots and stroke themm at once.
+	ctx1.stroke();
+	ctx1.globalAlpha = 1;			
+
 
 	// Rotate K.O. back
 	ctx1.translate(rotatex,rotatey);
@@ -935,66 +961,67 @@ function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizont
 	  ctx.stroke();
 	}
 }
+function putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
+	ctx1.strokeStyle = 'purple';		
+	ctx1.lineWidth=pixelSize;
+	ctx1.lineTo(xStart+mmppx,yStart+f1);			// Makes dots
+}
 
-function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
+function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
+	ctx1.fillStyle = 'purple';
+	ctx1.fillRect(xStart+mmppx,yStart+f1, pixelSize, pixelSize);			// Makes dotss
+}
 
-	// Make the wave look like it's travelling from 0 without modifying the equation
+function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
+	ctx1.fillStyle = 'purple';
+	ctx1.fillRect(xStart+mmppx,yStart+f1, 30, 30);			// Makes dotss
+}
 
-			
-		// This little fella is very CPU hungry. Optmize? Who has time for that, just wait 18 months  and it'll be twice faster!
-		if(document.getElementById("markFields").checked == '1'){	// So what's the logic with this stroke... The color is predefined before this fucntion is called, So gotta draw everything that was calcualted so far, end that draw, change contex color and start a new one. God...
-			ctx1.stroke();
-			
-			// JAvascript faster with fixed number.
+function putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
+	ctx1.fillStyle="green"
+	
+	
 			// Normalization with Amplitude of the Incoming wave! Now how am I going to get that in here...global variable again..
-			var incoming_ray_amp=wave1[2];
-			var temp_f1=Math.floor((((f1/incoming_ray_amp)+1)/2)*7);			// Basically puts the values between 0 and 7--8bit color code			
-			
-			switch (temp_f1) {
-			  case (0):
-				ctx1.strokeStyle = '#FBEFEF';	
-				break;
-			  case (1):
-				ctx1.strokeStyle = '#F8E0E0';	
-				break;
-			  case (2):
-				ctx1.strokeStyle = '#F6CECE';	
-				break;
-			  case (3):
-				ctx1.strokeStyle = '#F5A9A9';	
-				break;
-			  case (4):
-				ctx1.strokeStyle = '#F78181';	
-				break;
-			  case (5):
-				ctx1.strokeStyle = '#FA5858';	
-				break;
-			  case (6):
-				ctx1.strokeStyle = '#FE2E2E';	
-				break;
-			  case (7):
-				ctx1.strokeStyle = '#FF0000';	
-				break;
-			}	
-			ctx1.beginPath();
-			ctx1.rect(xStart+mmppx,yStart-25,0.5,50);			// Makes lines
-			//ctx1.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-		}		
+		//var incoming_ray_amp=wave1[2];
+		//var temp_f1=Math.floor((((f1/incoming_ray_amp)+1)/2)*7);			// Basically puts the values between 0 and 7--8bit color code			
 		
-		if(document.getElementById("markWaves").checked == '1'){	
-			//ctx1.stroke();
-			//ctx1.strokeStyle = 'blue';	
-			//ctx1.beginPath();
-			ctx1.rect(xStart+mmppx,yStart+f1, 0.1, 0.1);			// Makes dots
-		}
-		
-		if(document.getElementById("markFronts").checked == '1'){	
-			//ctx1.stroke();
-			//ctx1.strokeStyle = 'purple';	
-			ctx1.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
-		
+		var temp_f1=Math.floor((((f1/Amp)+1)/2)*50);			// Basically puts the values between 0 and 7--8bit color code			
+
+		if (temp_f1==49) {
+			ctx1.fillRect(xStart+mmppx,yStart-fieldsWidth/2,pixelSize,fieldsWidth);			// Makes lines	
+				}
+
+		//	switch (temp_f1) {
+		//	  case (0):
+		//		ctx1.strokeStyle = 'green';
+		//		ctx1.rect(xStart+mmppx,yStart-fieldsWidth/2,0.5,fieldsWidth);			// Makes lines		
+		//		break;
+		//	  case (1):
+		//		ctx1.strokeStyle = '#F8E0E0';	
+		//		break;
+		//	  case (2):
+		//		ctx1.strokeStyle = '#F6CECE';	
+		//		break;
+		//	  case (3):
+		//		ctx1.strokeStyle = 'red';	
+		//		ctx1.rect(xStart+mmppx,yStart-fieldsWidth/2,0.5,fieldsWidth);			// Makes lines
+		//		break;
+		//	  case (4):
+		//		ctx1.strokeStyle = '#F78181';	
+		//		break;
+		//	  case (5):
+		//		ctx1.strokeStyle = '#FA5858';	
+		//		break;
+		//	  case (6):
+		//		ctx1.strokeStyle = 'blue';
+		//		ctx1.rect(xStart+mmppx,yStart-fieldsWidth/2,0.5,fieldsWidth);			// Makes lines		
+		//		break;
+		//	  case (7):
+		//		ctx1.strokeStyle = '#blue';	
+		//		break;
+		//	}
+		//ctx1.globalAlpha = 1;
+
 }
 
 function sumArrays(array1,array2) {				// Sets the same size for arrays then adds them togehter
@@ -1107,15 +1134,39 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 	ctx1.rotate(tilt * Math.PI / 180);
 	ctx1.translate(-rotatex,-rotatey);
 	
+	
+	if(document.getElementById("markFronts").checked == '1'){	// LINE IS STROKEN ONLY ONCE
+		ctx1.beginPath();
+		moveTo(xStart,yStart);
+		};		
+
+		
+	ctx1.beginPath();
+	ctx1.moveTo(xStart,yStart);
 	for (var i=0;i<=array_wave.length;++i) {
 
 		var x=i*1/sampling;							
 		var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
 		var f1=array_wave[i]
 		
-		putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1)
-	}
+		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+		if(document.getElementById("markPoins").checked == '1'){	
+			//putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		} else if(document.getElementById("markFronts").checked == '1'){	
+			putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		} else if(document.getElementById("markFields").checked == '1'){
+			ctx1.globalAlpha = 0.5;		
+			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		}
+		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	}
+	ctx1.stroke();
+	ctx1.globalAlpha = 1;			
+
+
+	
 	// Rotate K.O. back
 	ctx1.translate(rotatex,rotatey);
 	ctx1.rotate(-tilt * Math.PI / 180);
@@ -1320,22 +1371,32 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
 
 // FUNCTION JUST FOR PRESENTATION PURPOSES
 // -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-function setSignalSimulationParameters(time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2) {
+function setSignalSimulationParameters(time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2,markFields,range_speed,range_sampling,range_dotSize) {
 
 t=time*1000;
 
 document.getElementById("radio_id_manual").checked=radio_id_manual
 document.getElementById("markFronts").checked=markFronts
+document.getElementById("markFields").checked=markFields
+
+
 document.getElementById("showReflecterRay").checked=showReflecterRay
 
 document.getElementById("range_refracted_raylenght").value=range_refracted_raylenght
 document.getElementById("range_frequency1").value=range_frequency1
 document.getElementById("range_frequency2").value=range_frequency2
 document.getElementById("theta1").value=theta1
+document.getElementById("range_speed").value=range_speed
+document.getElementById("range_sampling").value=range_sampling
+document.getElementById("range_dotSize").value=range_dotSize
+
+
 
 document.getElementById("range_n1").value=range_n1
 document.getElementById("range_n2").value=range_n2
 document.getElementById("range_n2z2").value=range_n2z2
+
+
 
 //setSignalSimulationParameters(1,1,1,23,446,370,0,105,115,149)
 //setSignalSimulationParameters(1,1,1,23,446,330,0,105,133,157)
@@ -1380,6 +1441,11 @@ TEST C:<span id="test3">ready</span> <br />
 					Število vzorcev na mikrometer:<span id="value_sampling"></span> <br />
 					<input type="range" id="range_sampling" min="1" max="300" value="60">
 				<br />
+				
+				<br />
+					Velikost vzorčne pike:<span id="value_dotSize"></span> pik <br />
+					<input type="range" id="range_dotSize" min="100" max="500" value="150">
+				<br />
 
 				
 				<br />
@@ -1423,7 +1489,7 @@ TEST C:<span id="test3">ready</span> <br />
 				<br />
 				<br />
 				
-				Točke: <input type="radio" name="pointsOrFronts"  id="markWaves" checked="0"> | 
+				Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
 				Povezane točke: <input type="radio" name="pointsOrFronts"  id="markFronts" checked="1"> |
 				Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1"> 				
 				
@@ -1510,17 +1576,19 @@ TEST C:<span id="test3">ready</span> <br />
 				
 				
 				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149)"> Negativna skupinska hitrost1, sk>c0</button><br />
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200)"> Negativna skupinska hitrost1, sk>c0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101)"> Fazna hitrost pol višja od skupinske</button><br />
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101,0,20,60,200)"> Fazna hitrost pol višja od skupinske</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101,0,20,60,200)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157)"> Skupinska hitrost višja od fazne</button><br />				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,133,157)"> Skupinska hitrost višja od fazne in c0</button><br />
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200)"> Skupinska hitrost višja od fazne</button><br />				
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,133,157,0,20,60,200)"> Skupinska hitrost višja od fazne in c0</button><br /><br />
+
+				<button onclick="setSignalSimulationParameters(1000,1,0,0,7,900,900,369,160,290,214,1,5,267,325)"> Interferenčni vzorec</button><br /><br />
 
 
 				<button onclick="setGroupVelocityHigehrThanPhaseVelocity()"> </button>
