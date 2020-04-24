@@ -22,14 +22,15 @@ input[type="range"] {
   float: left;
   min-width: 500px;
   min-height: 50px;
-  border: 3px solid #73AD21;
+  /*border: 3px solid #73AD21;*/
+
 }
 
 .row {
-   border: 3px solid blue;  
+   /*border: 3px solid blue;  */
    width: 1800px; 
    min-height:50px;
-   padding:0px;
+   padding:5px;
 }
 
 	/* Clear floats after the columns */
@@ -49,7 +50,7 @@ input[type="range"] {
 		  height: 1800px;
 		  float: left;
 		  position: relative;
-		  border: 3px solid #73AD21;
+		  /*border: 3px solid #73AD21;*/
 		}
 
 			#zadej {
@@ -82,15 +83,29 @@ input[type="range"] {
 
 
 /*POPUPS*/
-.white_content {
+.white_content_backup {
   display: none;
   position: absolute;
-  top: 25%;
-  left: 25%;
-  width: 50%;
-  height: 50%;
+  top: 50%;
+  left: 15%;
+  width: 400px;
+  height: 300px;
   padding: 16px;
   border: 16px solid gray;
+  background-color: linen;
+  z-index: 1002;
+  overflow: auto;
+}
+
+.white_content {
+  display: none;
+  position: relative;
+  top: 0;
+  left: 0px;
+  width: 400px;
+  height: 250px;
+  padding: 8px;
+  border: 8px solid gray;
   background-color: linen;
   z-index: 1002;
   overflow: auto;
@@ -194,7 +209,13 @@ function init() {
 					setCriticalAngle();
 			} else if (e.keyCode == 82){							// spacebar
 					reset_time();
-			} else if (e.keyCode == 38){							// ARROW UP
+			} else if (e.keyCode == 190){							// pika
+					var n2=Number(document.getElementById("range_n2").value);
+					document.getElementById("range_n2").value=n2+1;
+			} else if (e.keyCode == 188){							// pika
+					var n2=Number(document.getElementById("range_n2").value);
+					document.getElementById("range_n2").value=n2-1;
+			}else if (e.keyCode == 38){							// ARROW UP
 				var fTHz1=Number(document.getElementById("range_frequency1").value);
 					setFrequencyRay1(fTHz1+1);
 			} else if (e.keyCode == 40){							// ARROW DOWN
@@ -214,8 +235,9 @@ function init() {
 
 	
 	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
-	document.getElementById("markFronts").checked=0;
+	document.getElementById("markFronts").checked=1;
 	document.getElementById("markFields").checked=0;
+	document.getElementById("markWaves").checked=0;
 	
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// Backround Canvas
@@ -295,8 +317,8 @@ function drawCrossBorder(x,y,ctx2,DPmm) {
 // FUNCTION THAT IS BEEING CALLED EVERY XYZ MILISECOND FOR ANIMATION
 function draw(ctx1,canvas) {
 
-	// BEGIN DRAWING ON THE CANVAS
-		ctx1.clearRect(0,0, canvas.width,canvas.height);									// CLEAR CANVAS
+	// CLEAR CANVAS
+		ctx1.clearRect(0,0, canvas.width,canvas.height);								
 	
     //---- SET SIMULATION SAMPLING
 			sampling=document.getElementById("range_sampling").value;			// SETS GLOBAL VARIABLE
@@ -309,7 +331,7 @@ function draw(ctx1,canvas) {
 			document.getElementById("value_speed").innerHTML=slowdown_factor;
 			
 		// Show timer
-		document.getElementById("value_timer").innerHTML=(t-stopwatch1)/1000;		// Show timer
+		document.getElementById("value_timer").innerHTML=((t-stopwatch1)/1000).toFixed(2);		// Show timer
 
 		// Time is actually flowing?
 		if (document.getElementById("button_pause").value==1) 	{
@@ -317,38 +339,53 @@ function draw(ctx1,canvas) {
 		}
 		document.getElementById("value_time").innerHTML=(t/1000).toFixed(2);
 
-		// DRAW POLARIZATION ARROW
-	// polarization arrows
-		ctx1.beginPath();
-		ctx1.strokeStyle = '#585858';	
-		ctx1.lineWidth = 3;
-		drawLineWithArrows(0.5*DPmm,4*DPmm,2*DPmm,5.5*DPmm,15,15,false,true,ctx1)		// Carefu, strok inside already
-		ctx1.stroke();
-		
+	// DRAW POLARIZATION ARROW
+		// polarization arrows
+			ctx1.beginPath();
+			ctx1.strokeStyle = '#585858';	
+			ctx1.lineWidth = 3;
+			drawLineWithArrows(0.5*DPmm,4*DPmm,2*DPmm,5.5*DPmm,15,15,false,true,ctx1)		// Carefu, strok inside already
+			ctx1.stroke();
 			
-		if (document.getElementById("range_polarisation").value==0) {
-			ctx1.beginPath();
-			ctx1.strokeStyle = 'red';	
-			drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-			ctx1.stroke();
+				
+			if (document.getElementById("range_polarisation").value==0) {
+				ctx1.beginPath();
+				ctx1.strokeStyle = 'red';	
+				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			
+				ctx1.beginPath();
+				ctx1.strokeStyle = '#585858';	
+				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			} else {
+				ctx1.beginPath();
+				ctx1.strokeStyle = 'red';	
+				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
 		
-			ctx1.beginPath();
-			ctx1.strokeStyle = '#585858';	
-			drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-			ctx1.stroke();
+				ctx1.beginPath();
+				ctx1.strokeStyle = '#585858';	
+				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			}
+
+	//  HIDE settings setting n2 of second ray, if its no chosen
+		// IF RADIO BUTTON 
+		if (document.getElementById("radio_id_manual").checked == true) {
+				// SET VISIBILITY OF RANGE TO VISIBLE
+			document.getElementById("hidden_2nz2").style.visibility = 'visible';
 		} else {
-			ctx1.beginPath();
-			ctx1.strokeStyle = 'red';	
-			drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-			ctx1.stroke();
-	
-			ctx1.beginPath();
-			ctx1.strokeStyle = '#585858';	
-			drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-			ctx1.stroke();
+			document.getElementById("hidden_2nz2").style.visibility = 'hidden';
+
 		}
 		
-
+		// IF DISPERSIVE MEDIA CHOSEN BUT NOT SPECIAL ONES
+		if (document.getElementById("radio_id_onlytopdispersive").checked == true || document.getElementById("radio_id_onlybottmdispersive").checked == true || document.getElementById("radio_id_bothdispersive").checked == true) {
+				document.getElementById("hidden_dispersivity").style.visibility = 'visible';
+		} else {
+				document.getElementById("hidden_dispersivity").style.visibility = 'hidden';
+		}
 
 	
 		// DRAW BOTH RAYS
@@ -461,13 +498,16 @@ function draw(ctx1,canvas) {
 			ctx1.beginPath();
 			ctx1.fillStyle = "green";
 			ctx1.font = "bold 15px Lucida Console";
-			fillTextkaro("n1(" + fTHz + "THz)= "+Math.round(n1ray1*100)/100,1,4,ctx1,DPmm) 
-			fillTextkaro("n1(" + fTHz2 + "THz)= "+Math.round(n1ray2*100)/100,1,5,ctx1,DPmm) 
-			fillTextkaro("n2(" + fTHz + " THz)= "+Math.round(n2ray1*100)/100,1,17,ctx1,DPmm) 
-			fillTextkaro("n2(" + fTHz2 + " THz)= "+Math.round(n2ray2*100)/100,1,18,ctx1,DPmm) 
+			fillTextkaro("n1(" + fTHz + " THz)= "+Math.round(n1ray1*100)/100,1,4,ctx1,DPmm) 
+			fillTextkaro("n1(" + fTHz2 + " THz)= "+Math.round(n1ray2*100)/100,1,5,ctx1,DPmm) 
+			fillTextkaro("n2 (" + fTHz + " THz)= "+Math.round(n2ray1*100)/100,1,17,ctx1,DPmm) 
+			fillTextkaro("n2 (" + fTHz2 + " THz)= "+Math.round(n2ray2*100)/100,1,18,ctx1,DPmm) 
 			ctx1.stroke();	
 			
-			
+			// THETA
+			fillTextkaro("Θ",10.2,11,ctx1,DPmm) 
+			fillTextkaro("Θr",11.1,20,ctx1,DPmm) 
+
 			if (document.getElementById("showCalculations").checked==1) { 	//Disabling of too much
 				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
 				//OTHER THINGS ZAREK 1
@@ -487,23 +527,31 @@ function draw(ctx1,canvas) {
 				var reflectance1S=calculateReflectance(n1ray1,n2ray1,theta1rad,1);
 				var pozY1=30;
 				var pozX1=2;
+				var angle_refraction_ray1deg=Math.asin(Math.sin(theta1rad)*n1ray1/n2ray1)*180/Math.PI;
+
 				
 				// HTML INFORMING FOR BUTTON
 				if (isNaN(criticalAngle1)) {	
-					document.getElementById("message_noCriticalAngle").innerHTML="Critical Angle does not exist";
+					document.getElementById("message_noCriticalAngle").innerHTML="Kritični kot za žarek 1 obstaja";
 				} else {
 					document.getElementById("message_noCriticalAngle").innerHTML="";
 				}
 				
 				ctx1.beginPath();
-				ctx1.fillStyle = "#303030";
+				ctx1.fillStyle = "red";
 				ctx1.font = "bold 22px Lucida Console";
 				
 				fillTextkaro("ŽAREK 1",pozX1,pozY1-2,ctx1,DPmm) 	
-					
-				fillTextkaro("f[žar.1] = "+fTHz+" THz",pozX1,pozY1,ctx1,DPmm) 	
+				ctx1.stroke();	
 				
-				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX1,pozY1+2,ctx1,DPmm); 	
+				ctx1.beginPath();
+				ctx1.fillStyle = "#303030";
+
+				fillTextkaro("f[žarek 1] = "+fTHz+" THz",pozX1,pozY1,ctx1,DPmm) 	
+				
+				fillTextkaro("Θ = "+theta1deg+"°",pozX1,pozY1+2,ctx1,DPmm); 	
+				fillTextkaro("Θr = "+angle_refraction_ray1deg.toFixed(1)+"°",pozX1+6,pozY1+2,ctx1,DPmm); 	
+
 				fillTextkaro("ΘB = "+brewsterAngle1+"°",pozX1,pozY1+3,ctx1,DPmm); 	
 				fillTextkaro("ΘC = "+criticalAngle1+"°",pozX1,pozY1+4,ctx1,DPmm); 								
 
@@ -539,20 +587,29 @@ function draw(ctx1,canvas) {
 				var omega2=2*Math.PI*fTHz2/Math.pow(10,3);      					// rad/fs
 				var kzg2=2*Math.PI/lambda_zg2;				  						// rad/um
 				var ksp2=2*Math.PI/lambda_sp2;
-				var pozX2=27
+				var pozX2=25
 				var criticalAngle2=findCriticalAngle(n1ray2,n2ray2);
 				var brewsterAngle2=findBresterAngle(n1ray2,n2ray2);
-				//var theta2deg=document.getElementById("theta2").value/10;
-				//var theta2rad=theta2deg*Math.PI/180;
+				var theta2deg=theta1deg;
+				var theta2rad=theta1rad;
 				var reflectance2P=calculateReflectance(n1ray2,n2ray2,theta1rad,0);
 				var reflectance2S=calculateReflectance(n1ray2,n2ray2,theta1rad,1);
 				var messageGroupVelocity="Rezultat smiselen le, če ω1 ≈ ω2 in k1 ≈ k2  oziroma B < fc";
-				
-				fillTextkaro("ŽAREK 2",pozX2,pozY1-2,ctx1,DPmm) 	
+				var angle_refraction_ray2deg=Math.asin(Math.sin(theta1rad)*n1ray2/n2ray2)*180/Math.PI;
 
-				fillTextkaro("f[žar.2] = "+fTHz2+" THz",pozX2,pozY1,ctx1,DPmm) 		
+				//  7 fucking lined to change the font color of one text
+				ctx1.beginPath();
+				ctx1.fillStyle = "red";
+				fillTextkaro("ŽAREK 2",pozX2,pozY1-2,ctx1,DPmm) 	
+				ctx1.stroke();	
+				ctx1.beginPath();
+				ctx1.fillStyle = "#303030";
+
+
+				fillTextkaro("f[žarek 2] = "+fTHz2+" THz",pozX2,pozY1,ctx1,DPmm) 		
 				
-				fillTextkaro("Θ = "+document.getElementById("theta1").value/10+"°",pozX2,pozY1+2,ctx1,DPmm); 
+				fillTextkaro("Θ = "+theta2deg+"°",pozX2,pozY1+2,ctx1,DPmm); 
+				fillTextkaro("Θr = "+angle_refraction_ray2deg.toFixed(1)+"°",pozX2+6,pozY1+2,ctx1,DPmm); 	
 				fillTextkaro("ΘB = "+brewsterAngle2+"°",pozX2,pozY1+3,ctx1,DPmm); 					
 				fillTextkaro("ΘC = "+criticalAngle2+"°",pozX2,pozY1+4,ctx1,DPmm); 								
 				
@@ -576,38 +633,47 @@ function draw(ctx1,canvas) {
 
 				//OTHER THINGS SKUPINSKA HITROST SEŠTETI ŽAREK
 				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+				
+				var pozY3=pozY1+22;
+				
 				var deltaomegasp=omega2-omega1;
 				var deltaksp=ksp2-ksp1;
-				var group_speed_bot=deltaomegasp/deltaksp;
-				var c0toGroupSpeedBot=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
-				
+
 				var deltaomegazg=omega2-omega1;
 				var deltakzg=kzg2-kzg1;				
-				var group_speed_top=deltaomegazg/deltakzg;				
-				var c0toGroupSpeedTop=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
+				
+				// ČE je nan, potem je skupinska hitrost enaka fazni
+				if (isNaN(parseFloat("group_speed_top"))) {
+					group_speed_top=c0zg1;					// The zero divided by zero, this means that it's the same signal summed twice
+				}
+				
+				if (isNaN(parseFloat("group_speed_bot"))) {
+					group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
+				}
+				
+				var group_speed_top=deltaomegazg/deltakzg;			
+				var group_speed_bot=deltaomegasp/deltaksp;
+				var c0toGroupSpeedBot=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
+				var c0toGroupSpeedTop=Math.round(group_speed_top/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
 
+
+				ctx1.beginPath();
+				ctx1.fillStyle = "red";
+				fillTextkaro("SEŠTETI ŽAREK:",pozX1+2,pozY3,ctx1,DPmm); 
+				ctx1.stroke();	
+				ctx1.beginPath();
+				ctx1.fillStyle = "#303030";
 				
 				
-		//		if (isNaN(parseFloat("group_speed_top"))) {
-		//			group_speed_top=c0zg1;					// The zero divided by zero, this means that it's the same signal summed twice
-		//		}
-		//		
-		//		if (isNaN(parseFloat("group_speed_bot"))) {
-		//			group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
-		//		}
+				fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY3+2,ctx1,DPmm); 			
+				fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY3+3,ctx1,DPmm); 
 
-				fillTextkaro("SEŠTETI ŽAREK:",pozX1+2,pozY1+21,ctx1,DPmm); 
-				
-				fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY1+24,ctx1,DPmm); 			
-				fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY1+25,ctx1,DPmm); 
-
-				fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY1+24,ctx1,DPmm); 			
-				fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY1+25,ctx1,DPmm); 
+				fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY3+2,ctx1,DPmm); 			
+				fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY3+3,ctx1,DPmm); 
 				
 
-				fillTextkaro(messageGroupVelocity,pozX1+2,pozY1+22,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY1+28,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY1+29,ctx1,DPmm); 
+				fillTextkaro(messageGroupVelocity,pozX1+2,pozY3+22,ctx1,DPmm); 			
+				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+6,ctx1,DPmm); 			
+				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+7		,ctx1,DPmm); 
 			
 
 
@@ -717,7 +783,6 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			alert("I dun goffed! Something wrong with the choice of polarisation in the code");
 		}
 
-		document.getElementById("test1").innerHTML=R;
 		
 		// Calculating the phase of ray 2 - bacause our refracted wave is simulated as a new ray and I have to know at what phase the ray 1 ends
 			var wave1_wavelength=calculate_wavelenght(fTHz,n1);
@@ -874,16 +939,7 @@ function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizont
 function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 
 	// Make the wave look like it's travelling from 0 without modifying the equation
-		if(document.getElementById("markWaves").checked == '1'){	
-			ctx1.rect(xStart+mmppx,yStart+f1, 0.1, 0.1);			// Makes dots
-			//ctx1.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
-		if(document.getElementById("markFronts").checked == '1'){	
-			//ctx1.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
-			ctx1.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
-		}
-		
+
 			
 		// This little fella is very CPU hungry. Optmize? Who has time for that, just wait 18 months  and it'll be twice faster!
 		if(document.getElementById("markFields").checked == '1'){	// So what's the logic with this stroke... The color is predefined before this fucntion is called, So gotta draw everything that was calcualted so far, end that draw, change contex color and start a new one. God...
@@ -924,7 +980,20 @@ function putRayOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 			ctx1.rect(xStart+mmppx,yStart-25,0.5,50);			// Makes lines
 			//ctx1.rect(xStart+mmppx,yStart+f1, 1, 1);			// Makes dots
 		}		
-
+		
+		if(document.getElementById("markWaves").checked == '1'){	
+			//ctx1.stroke();
+			//ctx1.strokeStyle = 'blue';	
+			//ctx1.beginPath();
+			ctx1.rect(xStart+mmppx,yStart+f1, 0.1, 0.1);			// Makes dots
+		}
+		
+		if(document.getElementById("markFronts").checked == '1'){	
+			//ctx1.stroke();
+			//ctx1.strokeStyle = 'purple';	
+			ctx1.lineTo(xStart+mmppx,yStart+f1);			// Connets lines
+		}
+		
 		
 }
 
@@ -1094,8 +1163,6 @@ function pause_time() {
 		document.getElementById("button_pause").innerHTML="START"
 		document.getElementById("button_pause").value=0
 
-		//document.getElementById("value_timer").innerHTML=Math.floor(time_passed*1000)/1000;
-		//document.getElementById("value_timer").innerHTML=time_passed;
 	}
 }
 
@@ -1161,7 +1228,7 @@ function findBresterAngle(n1,n2) {
 	
 		// If not possible to calculate
 		if (isNaN(brewsterAngle)) {	
-			alert("No Brewster Angle exists");
+			//alert("No Brewster Angle exists");
 		} 
 		
 	var brewsterAngleDeg = Math.ceil(brewsterAngle*180/Math.PI*10)/10;		// Accurate by 0.1 degree
@@ -1250,6 +1317,33 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
 	ctx.beginPath();			// I can't stroke before I transform...
 	
 }
+
+// FUNCTION JUST FOR PRESENTATION PURPOSES
+// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+function setSignalSimulationParameters(reset_time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2) {
+
+	if (reset_time) {
+		t=0;
+	}
+
+document.getElementById("radio_id_manual").checked=radio_id_manual
+document.getElementById("markFronts").checked=markFronts
+document.getElementById("showReflecterRay").checked=showReflecterRay
+
+document.getElementById("range_refracted_raylenght").value=range_refracted_raylenght
+document.getElementById("range_frequency1").value=range_frequency1
+document.getElementById("range_frequency2").value=range_frequency2
+document.getElementById("theta1").value=theta1
+
+document.getElementById("range_n1").value=range_n1
+document.getElementById("range_n2").value=range_n2
+document.getElementById("range_n2z2").value=range_n2z2
+
+//setSignalSimulationParameters(1,1,1,23,446,370,0,105,115,149)
+//setSignalSimulationParameters(1,1,1,23,446,330,0,105,133,157)
+}
+
+
 </script>
 
 <body onLoad="init();">
@@ -1262,7 +1356,9 @@ TEST C:<span id="test3">ready</span> <br />
  <div id="overlay_parent">
 	 <div id="overlay_content">
 		<div class="row">	
-			<b> MONOCHROMATIC POLARIZED "narrow" plane TEM WAVE FALLING ON A NON MAGNETC NON-CONDUCTIVE MEDIUM WITH A FREQUENCY INDEPENDENT REFRACTIVE INDEX</b>
+			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA |  NESKONČNO OZKA | SVETLOBNA | TEM ŽARKA | Z NUMERIČNO APERTURO NIČ |  
+			KI PRESTOPATA MEJO DVEH RAZLIČNIH (disperzivnih ali nedisperzivnih) MATERJALOV, OPISANA Z VALOVNO TEORIJO SVETLOBE. 
+			(torej - v naravi neobstoječa)
 		</div>
 		<!-- SIMULACIJA -->
 		<div class="row">
@@ -1270,7 +1366,7 @@ TEST C:<span id="test3">ready</span> <br />
 
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
-			<div class="column" id="levi">
+			<div class="column" id="levi">					
 					<h2>SIMULACIJA</h2>
 					<button id="button_reset" onclick="reset_time()">t = 0</button>
 					<button id="button_pause" value="1" onclick="pause_time()">STOP</button> <br /><br />
@@ -1284,7 +1380,7 @@ TEST C:<span id="test3">ready</span> <br />
 				
 				<br />
 					Število vzorcev na mikrometer:<span id="value_sampling"></span> <br />
-					<input type="range" id="range_sampling" min="1" max="300" value="100">
+					<input type="range" id="range_sampling" min="1" max="300" value="60">
 				<br />
 
 				
@@ -1319,8 +1415,9 @@ TEST C:<span id="test3">ready</span> <br />
 				<button id="button_totalref" onclick="setCriticalAngle();">Kritični kot žarka 1</button>  &nbsp; &nbsp;
 				<button id="button_totalref" onclick="setBrewsterAngle();">Brewsterjev kot žarka 1</button> &nbsp; &nbsp;
 				<button onclick="setThetaAngle(0)">Theta=0</button></br>
-				<span id="message_noCriticalAngle"></span>
-				<br />
+
+				<i><span id="message_noCriticalAngle" color="red"></span></i>
+				<br /><br />
 				
 				Polarizacija obeh žarkov <br />
 				P <input type="range" id="range_polarisation" width"50" min="0" max="1" value="0"> S 
@@ -1328,9 +1425,9 @@ TEST C:<span id="test3">ready</span> <br />
 				<br />
 				<br />
 				
-				Točke: <input type="checkbox" id="markWaves" checked="1"> | 
-				Povezane točke: <input type="checkbox" id="markFronts" checked="1"> || 
-				Polja: <input type="checkbox" id="markFields" checked="1"> 
+				Točke: <input type="radio" name="pointsOrFronts"  id="markWaves" checked="0"> | 
+				Povezane točke: <input type="radio" name="pointsOrFronts"  id="markFronts" checked="1"> |
+				Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1"> 				
 				
 				<br />
 				<br />
@@ -1345,32 +1442,66 @@ TEST C:<span id="test3">ready</span> <br />
 					<b>Lomni količnik spodnjega medija: n2:</b> <span id="value_n2"></span> <br>
 					<input type="range" id="range_n2" min="10" max="300" value="100"></br>
 					<br />			
-
-					<b>Lomni količnik spodnjega medija za žarek 2: n2z2:</b> <span id="value_n2z2"></span> <br>
-					<input type="range" id="range_n2z2" min="10" max="300" value="100"></br>
-			
+					
+					<span id="hidden_2nz2">
+						<b>Lomni količnik spodnjega medija za žarek 2:</b> <span id="value_n2z2"></span> <br>
+						<input type="range" id="range_n2z2" min="10" max="300" value="100"></br>
+					</span>
 					
 					
 					
 				<!-- Dispersivity -->
-				  <span onMouseOver="document.getElementById('popup_dispersitivity').style.display='block'" onMouseOut="document.getElementById('popup_dispersitivity').style.display='none'">
-						<b>Faktor disperzije</b>
-				  </span>
+				<span id="hidden_dispersivity"">
+					  <span onMouseOver="document.getElementById('popup_dispersitivity').style.display='block'" onMouseOut="document.getElementById('popup_dispersitivity').style.display='none'">
+							<b>Faktor disperzije [?]</b>
+					  </span>
+							<!-- POPUPT:  FAKTOR DISPERZIJE: -->
+						  <span id="popup_dispersitivity" class="white_content">
+							<b>
+								Odvisnost lomnega količnka je odvisna od frekvence signala na sledeč način:<br/><br />
+								n2 + Math.pow(fTHz/100*n2,faktor-disperizje/2)<br /><br />
+								ZAKAJ?  TESTING---					  
+					  
+							</b>
+						</span>		
 
-
+					  
+					  
 					<br />
 					<input type="range" id="range_dispersion" min="1" max="10" value="1"><span id="value_randgedispersion"></span></br>
 					<br />
+				</span>
+				
 					<input type="radio"name="radio_dispersion" checked="checked" value="0">	Oba medija brez disperzije </input><br>
-					<input type="radio"name="radio_dispersion" value="1">					Gornji medij disperziven</input><br>
-					<input type="radio"name="radio_dispersion" value="2">					Spodnji medij disperziven </input><br>
-					<input type="radio"name="radio_dispersion" value="3">					Oba medija disperzivna</input><br>
-					<input type="radio"name="radio_dispersion" value="4">										
+					<input type="radio"name="radio_dispersion" value="1" id="radio_id_onlytopdispersive">					Gornji medij disperziven</input><br>
+					<input type="radio"name="radio_dispersion" value="2" id="radio_id_onlybottmdispersive">					Spodnji medij disperziven </input><br>
+					<input type="radio"name="radio_dispersion" value="3" id="radio_id_bothdispersive">					Oba medija disperzivna</input><br>
+					<input type="radio"name="radio_dispersion" value="4" id="radio_id_specialmedium">	Poseben namišljeni medij 									
 						<span onMouseOver="document.getElementById('popup_specialmedia').style.display='block'" onMouseOut="document.getElementById('popup_specialmedia').style.display='none'">
-							<b>Poseben namišljeni medij ??</b>
+							<b>[?]</b>
 						</span>
+							<!-- POPUPT:  SPECIAL MEDIA: -->
+						  <span id="popup_specialmedia" class="white_content">
+							<b>
+								Ta nimšljen medij je tak, da ima enako valovno dolžino ne glede na frekvenco.<br /><br />
+								ZAKAJ?: Da se jasno vidi, da valovna dolžina ni tisto kar določa barvo (v naših očeh), pač pa frekvenca.
+							</b>
+						</span>						
 					</input><br>
-					<input type="radio"name="radio_dispersion" value="5">					ROČNO NASTAVI N</input><br>
+					
+					<input type="radio" name="radio_dispersion" value="5" id="radio_id_manual"> Ročno nastavi n2 za žarek 
+						<span onMouseOver="document.getElementById('popup_manual').style.display='block'" onMouseOut="document.getElementById('popup_manual').style.display='none'">
+							<b>	2 [?]</b>
+						</span>
+							<!-- POPUPT:  ROČNI N: -->
+						  <span id="popup_manual" class="white_content">
+							<b>
+								Odgovarja na vprašanje: <br /><br />
+								Kaj če bi bil lomni količnik medija tak, da bi imel lomni količnik n1 pri frekvenci f1 in n2 pri frekvenci n2?<br/><br />
+								<br /><br />
+							</b>
+						</span>		
+					</input><br>
 
 				
 				
@@ -1378,11 +1509,40 @@ TEST C:<span id="test3">ready</span> <br />
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<hr />
 				<h2>BLIŽNJICE</h2>
+				
+				
+				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
+				<button onclick="setSignalSimulationParameters(0,1,1,1,23,446,370,0,105,115,149)"> Negativna skupinska hitrost1</button><br />
+				<button onclick="setSignalSimulationParameters(0,1,1,1,23,446,330,0,105,133,157)"> Skupinska hitrost višja od fazne</button><br />
+				<button onclick="setGroupVelocityHigehrThanPhaseVelocity()"> </button>
+
+				
+				
+				<br />
+				<br />
+				
+						<span onMouseOver="document.getElementById('popup_tipkovnica').style.display='block'" onMouseOut="document.getElementById('popup_tipkovnica').style.display='none'">
+							<b>	TIPKOVNICA: [?]</b>
+						</span>
+							<!-- POPUPT:  ROČNI N: -->
+						  <span id="popup_tipkovnica" class="white_content">
+							<b>
+								UP ................Povečaj f1<br>
+								DOWN................Zmanjšaj f1<br>
+								LEFT................Povečaj vpadni kot<br>
+								RIGHT................Pomanjšaj vpadni kot<br>
+								SPACEBAR................Ustavi čas<br>
+								T................Nastavi vpadni kot na 0<br>
+								B................Nastavi Brewsterjev kot za žarek 1<br>
+								V................Nastavi kritični kot za žarek 1<br>
+								P................Spremeni polarizacijo<br>
+								pika.............povečaj n2
+								vejica...........pomanjšaj n2
+								<br /><br />
+							</b>
+						</span>	
 						
-				<button onclick="downloadCanvas()"> IZVOZI V PNG</button>
-				<br />
-				<br />
-				TIPKOVNICA: <br><br>
+				<br><br>
 				UP <br>
 				DOWN<br>
 				LEFT<br>
@@ -1406,6 +1566,26 @@ TEST C:<span id="test3">ready</span> <br />
 					<canvas id="myCanvas">Your browser does not support the HTML5 canvas tag.</canvas>
 					<a href="https://youtu.be/kMSgE62S6oo?t=117" style="float:right; font-size: 10px; color:gray;"> By the way, light is actually particles, not waves: https://youtu.be/kMSgE62S6oo?t=117</a>
 				</div>
+				
+				
+			
+
+				<!-- MESSAGES IN THE POPUPS -->
+
+					
+					<!-- POPUP DISPERSITIVITY: ID=light -->
+						 <span id="popup_dispersitivity" class="white_content">
+								Dispersivity is a made-up property of a fictional material (could be real, I have no idea). 
+								It tell how much the change of frequency changes therefraction index for that frequency.  
+								By default, the equation to calculate n is: <br /><br />
+						<span align="center"> n+((fTHz-300)/300)*dispersivity. </span><br /><br />
+						 </span>
+					  
+					
+				
+				
+				
+				
 			</div>
 			
 		</div>
@@ -1415,25 +1595,6 @@ TEST C:<span id="test3">ready</span> <br />
 
 
 
-		<!-- MESSAGES IN THE POPUPS -->
-
-			  
-			<!-- DISPERSITIVITY: ID=popup_specialmedia -->
-			  <span id="popup_specialmedia" class="white_content">
-				<b>
-					n2=const./fTHZ - inversly corelated to frequency - all the waves will end up having the same wavelength 
-					This dispersivity is linearly dependend of the frequency. the amount tells how much
-
-				</b>
-						<!-- DISPERSITIVITY: ID=light -->
-						  <span id="popup_dispersitivity" class="white_content">
-									Dispersivity is a made-up property of a fictional material (could be real, I have no idea). 
-									It tell how much the change of frequency changes therefraction index for that frequency.  
-									By default, the equation to calculate n is: <br /><br />
-							<span align="center"> n+((fTHz-300)/300)*dispersivity. </span><br /><br />
-						  </span>
-			  </span>
-			
 
 	</div>
 	<div id="overlay_popup">
