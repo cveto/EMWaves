@@ -16,6 +16,8 @@ Needa a kinda-powerful computer to run this as code isn't optimizied for perform
 
 Reducing speed will not make it easier for the PC, reducing sample size however - will.
 
+- code looks nicer in Notepad++
+
 <img src="screenshots/screenshot2.png" alt="Screenshot2">
 <img src="screenshots/screenshot1.png" alt="Screenshot1">
 <img src="screenshots/screenshot3.png" alt="Screenshot3">
