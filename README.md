@@ -1,7 +1,8 @@
 # EMWaves
 
 
-## Simple Electromagnetic Wave Simulator
+## Simple Electromagnetic Wave Simulator - animated
+
 
 This is a one-file-only HTML/Javascript(pure)/CSS simulator of light. It is capable of simulating some simple wave propeties and calculate basic parameters.
 
