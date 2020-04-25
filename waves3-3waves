@@ -110,7 +110,31 @@ input[type="range"] {
   overflow: auto;
 }
 
+
+/*BUTTONS  -- https://www.fabriziovanmarciano.com/button-styles/*/  
+.example_d {
+color: #494949 !important;
+text-transform: uppercase;
+background: #ffffff;
+padding: 20px;
+border: 4px solid #494949 !important;
+border-radius: 6px;
+display: inline-block;
+transition: all 0.3s ease 0s;
+}
+
+.example_d:hover {
+color: #494949 !important;
+border-radius: 50px;
+border-color: #494949 !important;
+transition: all 0.3s ease 0s;
+}
+
+
+
 /*MATH EQUATIONS - https://code-boxx.com/math-equations-html*/.. .. Not yet implemented..maybe
+
+
 
 
 </style>
@@ -715,7 +739,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
 			var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 		
-		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
+		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0,1);
 
 
 	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -766,8 +790,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			var tdelay=calculateTravelTime(raylength,n1);
 		
 		// ---------------DRAW REFRACTED RAY, RAY 2 ---------------
-		var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
-
+		var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay,T);
 
 
 	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -775,12 +798,34 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 		if (document.getElementById("showReflecterRay").checked==1) {
 			var theta3rad = thetaRad-Math.PI/2;
 			var tilt3=theta3rad*180/Math.PI;			
-
+		
+		// PHASE SHIFT in thick medium
+		// 1. ALL (?) Light changes phase when it goes to a higher refractive index
+		// 2. This is only true for the phase change of the Electrical Field, Magnetic Field does not change
+		// 3. This is only true for near-normal incidence.. For example P-polarized reflected above Brewste rangle will have 0° phase change ??
+		// 4. According to https://iqst.ca/quantech/pubs/2013/fresnel-eoe.pdf:
+					// S polarized light changes phase 180° at all angles
+					// P polarized light changes phase for angles of incience is higher from Brewster's angle.
+		// Linearly polarized light becomes eliptically polarized after total inte
+		
+		//P polarized light changes phase 180
 			// IF WE ARE AT P PLANE POLARIZATION AND THETA = AT BREWSTERS ANGLE; DON?T SHOW A WAVE:::(remove straight line)
+			
+			var polarization_active=document.getElementById("range_polarisation").value;
+			
+			// DELAY PHASE FOR ALL LIGHT...
+			var wave3_phase=wave2_phase-Math.PI/2;		
+			var brewsterAngle=findBresterAngle();
+
+			// EXCEPT IF It's  Linearly polarized at S plane at an angle lower than brewsters. ?? Double check this
+			if (polarization_active==1 && thetaRad <= findBresterAngle(n1,n2)) {					// P plane
+				wave3_phase=wave2_phase;	
+			} 
+			
 			if (document.getElementById("range_polarisation").value==0 && theta1 == findBresterAngle(n1,n2)) {
-				var arrayReflected=new Array();			// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
+				var arrayReflected=new Array();											// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
 			} else  {
-				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
+				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave3_phase,n1,tdelay,R);
 			}
 			
 		} else {		// return empty array if.. user donesn't want it shown
@@ -794,7 +839,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 }
 
 // FUNCTION THAT ACTUALLYD DRAWS THE WAVES
-function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay) {
+function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,reflectance) {
 
 	// Defined
 		var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
@@ -870,7 +915,8 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay)
 					ctx1.globalAlpha = 0.5;		
 					putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 			} else if (document.getElementById("markFronts").checked == '1'){
-					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+					//calculateReflectance(n1,n2,thetaRad,pol_choice) {
+					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance);
 				
 				// GHOSTS - failed attempt at just knowing where the fronts will be but ended up eating my CPU. So easier to "re-sample" my construced signal.
 				// NOT DOING THIS ANYMORE; THIS IS A NIGHTMARE. TLets use flage and global variabls instead
@@ -911,11 +957,13 @@ function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 	ctx1.fillRect(xStart+mmppx,yStart+f1, pixelSize, pixelSize);			// Makes dotss
 }
 
-function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
-	ctx1.fillStyle = 'purple';
+function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance) {		
+	ctx1.fillStyle = 'blue';
+	//if (reflectance < 0.05) reflectance=0.05;			// Otherwise it's too dim
+	ctx1.globalAlpha=reflectance;
+	
 	
 	// Detect peak with +90%
-	
 	// Trying to detect if smaller than 0, but javascript faster with == than with >
 	if (Math.sign(parseInt(f1))==1 && flag_front==1){	
 	ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
@@ -996,6 +1044,8 @@ function fillTextkaro(tekst,kvadratek_x,kvadratek_y,ctx,DPmm) {
 
 // DESCRIPTION OF REAL MATERIALS - GLASS,...
 function getDispersiveN(n,fTHz,material) {		
+	// Adding just a few materials which are transparent for most frequencies... Didn't implement the limit on the range yet.
+
 	//return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
 	//return (n+Math.pow(fTHz/370,30));							// n is linearly related to f
 	//return (n+Math.pow(fTHz/100*n,dispersivity/2))
@@ -1038,10 +1088,47 @@ function getDispersiveN(n,fTHz,material) {
 	
 		var n = (A) + ( (  B  )/(  Lsq - C  ) )
 		var n = Math.sqrt(n);
+
+	} else if (material=="zrak") {
+		// 15°C, 101325 Pa	https://refractiveindex.info/?shelf=other&book=air&page=Ciddor
+		var A=0.05792105;
+		var B=238.0185;
+		var C=0.00167917;
+		var D=57.362;
+	
+		var n = 1 + (  A / (B - Math.pow(Lsq,-1))  )  +  (  (C) / (D-1/Lsq)  );
+		document.getElementById("test1").innerHTML="zrak "+n;
+
 		
-	} else if (material=="vakum") {
+	} else if (material=="argon") {
+		// 15°C, 101325 Pa	https://refractiveindex.info/?shelf=other&book=air&page=Ciddor
+		var A=2.50141*Math.pow(10,-3);
+		var B=91.012;
+		var C=5.00283*Math.pow(10,-4);
+		var D=87.892;
+		var E=5.22343*Math.pow(10,-2);
+		var F=214.02;
+		var Lsqi=Math.pow(Lsq,-1);
+	
+		var n = 1 + ( A / (B-Lsqi) ) + ( C / (D-Lsqi) ) + ( E / (F-Lsqi) );
+
+	} else if (material=="AlAs") {
+		// 15°C, 101325 Pa	https://refractiveindex.info/?shelf=other&book=air&page=Ciddor
+		var A=1.0792;
+		var B=6.08401;
+		var Csq=Math.pow(0.2822,2);
+		var D=1.900;
+		var Esq=Math.pow(27.62,2);
+	
+		var n = 1 + (A) +  ((B*Lsq)/(Lsq-Csq))  +  ((D*Lsq)/(Lsq-Esq));
+		var n = Math.sqrt(n);
+
+	}else if (material=="vakum") {
 		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
-		var n = 1;
+		var n = 1.0000;			
+		
+	} else {
+		var n = 1.1111;			// Just so i know where I made a mistuake
 	}
 
 
@@ -1240,8 +1327,11 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 				putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 			} else if(document.getElementById("makrCurves").checked == '1'){	
 				putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			} else if (document.getElementById("markFronts").checked == '1'){
+					var reflectance=0.5;
+					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance)
 			} else if(document.getElementById("markFields").checked == '1'){
-				ctx1.globalAlpha = 0.5;		
+				ctx1.globalAlpha = 0;;		
 				putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 			}
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -1461,14 +1551,23 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
 
 // BUTTONS!!! PRESET 
 // -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-function setSignalSimulationParameters(time,radio_id_manual,makrCurves,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2,markFields,range_speed,range_sampling,range_dotSize) {
+function setSignalSimulationParameters(
+	time,				radio_id_manual,	makrCurves,  	showReflecterRay,  range_refracted_raylenght,  
+	range_frequency1,	range_frequency2, 	theta1,			range_n1,			range_n2,			
+	range_n2z2,			markFields,			range_speed,	range_sampling,		range_dotSize,
+	range_amplitude,	markFronts,			radio_id_specialmedium) {
 
 	t=time*1000;
 
 	// CHECKED
-		document.getElementById("radio_id_manual").checked=radio_id_manual
-		document.getElementById("makrCurves").checked=makrCurves
-		document.getElementById("markFields").checked=markFields
+
+		if (radio_id_manual != "x") document.getElementById("radio_id_manual").checked=radio_id_manual;
+		if (radio_id_specialmedium != "x") document.getElementById("radio_id_specialmedium").checked=radio_id_specialmedium
+		
+		if (markFronts) document.getElementById("markFronts").checked=markFronts;								// Was behaving strangely if undefined.. I don't know
+		if (makrCurves)	document.getElementById("makrCurves").checked=makrCurves;
+		//document.getElementById("markFields").checked=markFields
+
 		document.getElementById("showReflecterRay").checked=showReflecterRay
 
 	// VALUE
@@ -1479,6 +1578,8 @@ function setSignalSimulationParameters(time,radio_id_manual,makrCurves,showRefle
 		document.getElementById("range_speed").value=range_speed
 		document.getElementById("range_sampling").value=range_sampling
 		document.getElementById("range_dotSize").value=range_dotSize
+		document.getElementById("range_amplitude").value=range_amplitude;
+
 
 	// RANGE
 		document.getElementById("range_n1").value=range_n1
@@ -1490,7 +1591,7 @@ function setSignalSimulationParameters(time,radio_id_manual,makrCurves,showRefle
 </script>
 
 <body onLoad="init();">
-<!-- TEST 1:<span id="test1">ready</span></br>
+ TEST 1:<span id="test1">ready</span></br>
 TEST 2:<span id="test2">ready</span></br>
 TEST 3:<span id="test3">ready</span> <br />
 TEST 4:<span id="test4">ready</span></br>
@@ -1504,7 +1605,7 @@ TEST 11:<span id="test11">ready</span></br>
 TEST 12:<span id="test12">ready</span> <br />
 TEST 13:<span id="test13">ready</span> <br />
 TEST 14:<span id="test14">ready</span> <br />
-TEST 15:<span id="test15">ready</span> <br /> -->
+TEST 15:<span id="test15">ready</span> <br /> 
 
  <div id="overlay_parent">
 	 <div id="overlay_content">
@@ -1512,10 +1613,9 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 
+			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA | KOHERENTNA |  "NESKONČNO OZKA" !?! "TEM | SVETLOBNA ŽARKA"  |  Z NUMERIČNO APERTURO NIČ |  
 
-			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA |  NESKONČNO OZKA | SVETLOBNA | TEM ŽARKA | Z NUMERIČNO APERTURO NIČ |  
-			KI PRESTOPATA MEJO DVEH RAZLIČNIH (disperzivnih ali nedisperzivnih) materialOV, OPISANA Z VALOVNO TEORIJO SVETLOBE. 
-			(torej - v naravi neobstoječa)
+			KI PRESTOPATA V NESKONČNO DOLG MEDIJ Z OPTIČNO RAZLIČNO GOSTOTO. 
 		</div>
 		<!-- SIMULACIJA -->
 			<div class="row">
@@ -1541,11 +1641,11 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 					
 					
 						Velikost vzorčne pike:<span id="value_dotSize"></span> pik <br />
-						<input type="range" id="range_dotSize" min="100" max="500" value="150">
+						<input type="range" id="range_dotSize" min="100" max="500" value="250">
 					<br />
 					
 					
-						Širina fronte /ali/ Amplituda: <span id="value_amplitude"></span>x <br />
+						Širina fronte ali Amplitude: <span id="value_amplitude"></span>x <br />
 						<input type="range" id="range_amplitude" min="1" max="300" value="20">
 					<br />
 					
@@ -1555,12 +1655,21 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 					<br />
 
 
-					<br />
-					Skrij odbojni žarek: <input type="checkbox" id="showReflecterRay" checked="checked"> 
+			
 					<br />
 					
+					Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
+					Povezane točke: <input type="radio" name="pointsOrFronts"  id="makrCurves" checked="1"> | 
+					Fronte: <input type="radio" name="pointsOrFronts" id="markFronts" checked="1"> 				
+					<span style="visibility: hidden">Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1" style="visibility: hidden;" ></span>	
+
 					<br />
-					Prikaži izračune: <input type="checkbox" id="showCalculations" checked="checked"> 
+
+
+					<br />
+					Pokaži odbojni žarek: <input type="checkbox" id="showReflecterRay" checked="checked"> 
+					
+					Prikaži parametre: <input type="checkbox" id="showCalculations" checked="checked"> 
 					<br />
 
 
@@ -1589,16 +1698,7 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 					Polarizacija obeh žarkov <br />
 					P <input type="range" id="range_polarisation" width"50" min="0" max="1" value="0"> S 
 					
-					<br />
-					<br />
-					
-					Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
-					Povezane točke: <input type="radio" name="pointsOrFronts"  id="makrCurves" checked="1"> | 
-					Fronte: <input type="radio" name="pointsOrFronts" id="markFronts" checked="1"> 				
-					<span style="visibility: hidden">Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1" style="visibility: hidden;" ></span>	
 
-					<br />
-					<br />
 
 					
 
@@ -1625,7 +1725,7 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 					
 					
 					
-				<!-- LeFT DROPDOWN MENU -->
+<!-- 				<!-- LeFT DROPDOWN MENU -->
 				<span id="hidden_dropdownLeft">
 					material:
 					  <span onMouseOver="document.getElementById('popup_material').style.display='block'" onMouseOut="document.getElementById('popup_material').style.display='none'"> 
@@ -1633,17 +1733,20 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 					  </span>
 							<!-- POPUPT:  FAKTOR DISPERZIJE: -->
 						<span id="popup_material" class="white_content">
-								IZBERI MEDIJ; ENAČBA ZA APROKSIMACIJO POBRANA IZ...	 velja pri temperaturi 20°C		  
+								
 						</span>		
 					<br />
 						<span id="value_randgedispersion"></span></br>
-					<!--  DROPDOWN MENU-->
-					
+					<!--  DROPDOWN MENU--> -->
+					Zgornji medij:
 					<select id="menu_material_top">
 					  <option value="sio2">STEKLO SiO2</option>
 					  <option value="Yb2O3">Yb2O3</option>
 					  <option value="TiO2">TiO2</option>
-					  <option value="vakum">Vakum</option>
+					  <option value="vakum">Vakum</option><br />
+					  <option value="zrak">Zrak</option><br />
+					  <option value="argon">Argon</option><br />
+					  <option value="AlAs">AlAs</option><br />
 
 
 					</select>
@@ -1651,26 +1754,43 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 				</span>
 				
 				<!-- LeFT DROPDOWN MENU -->
-				<span id="hidden_dropdownRight">					
+				<span id="hidden_dropdownRight">
+					Spodnji medij:
 					<select id="menu_material_bottom">
 						<option value="sio2">STEKLO SiO2</option>
 					   <option value="Yb2O3">Yb2O3</option>
 					  <option value="TiO2">TiO2</option>
 					  <option value="vakum">Vakum</option>
-
+					  <option value="zrak">Zrak</option><br />
+					  <option value="argon">Argon</option><br />
+					  <option value="AlAs">AlAs</option><br />
 
 					</select>
 				</span>
 					
-					
-					
+
 					<br />
 					<br />
 				
 					<input type="radio"name="radio_dispersion" checked="checked" value="0" id="radio_id_nonedispersive">	Oba medija brez disperzije </input><br>
 					<input type="radio"name="radio_dispersion" value="1" id="radio_id_onlytopdispersive">					Gornji medij disperziven</input><br>
 					<input type="radio"name="radio_dispersion" value="2" id="radio_id_onlybottmdispersive">					Spodnji medij disperziven </input><br>
-					<input type="radio"name="radio_dispersion" value="3" id="radio_id_bothdispersive">					Oba medija disperzivna</input><br>
+					
+					<input type="radio"name="radio_dispersion" value="3" id="radio_id_bothdispersive">					Resnični materiali
+						<span onMouseOver="document.getElementById('popup_bothdispersive').style.display='block'" onMouseOut="document.getElementById('popup_bothdispersive').style.display='none'">
+							<b>	[?]</b>
+						</span>
+							<!-- POPUPT:  ROČNI N: -->
+						  <span id="popup_bothdispersive" class="white_content">
+							<b>
+								Izgube v mediju še niso implementirane <br /><br />
+								Vir:  https://refractiveindex.info
+								<br /><br />
+							</b>
+						</span>		
+					</input><br>
+					
+					
 					<input type="radio"name="radio_dispersion" value="4" id="radio_id_specialmedium">	Poseben namišljeni medij 									
 						<span onMouseOver="document.getElementById('popup_specialmedia').style.display='block'" onMouseOut="document.getElementById('popup_specialmedia').style.display='none'">
 							<b>[?]</b>
@@ -1678,8 +1798,11 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 							<!-- POPUPT:  SPECIAL MEDIA: -->
 						  <span id="popup_specialmedia" class="white_content">
 							<b>
-								Ta nimšljen medij je tak, da ima enako valovno dolžino ne glede na frekvenco.<br /><br />
-								ZAKAJ?: Da se jasno vidi, da valovna dolžina ni tisto kar določa barvo (v naših očeh), pač pa frekvenca.
+								IZMIŠLJEN MEDIJ, V KATEREM SE LAHKO GIBA LE SVETLOBA ENE SAME VALOVNE DOLŽINE. <BR />
+								NE GLEDE NA FREKVENCO <BR /><BR />
+								
+								<br /><br />
+								ČEMU?: Da se jasno vidi, da valovna dolžina ni tisto kar določa barvo (v naših očeh), pač pa frekvenca (E=h*f)
 							</b>
 						</span>						
 					</input><br>
@@ -1691,8 +1814,7 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 							<!-- POPUPT:  ROČNI N: -->
 						  <span id="popup_manual" class="white_content">
 							<b>
-								Odgovarja na vprašanje: <br /><br />
-								Kaj če bi bil lomni količnik medija tak, da bi imel lomni količnik n1 pri frekvenci f1 in n2 pri frekvenci n2?<br/><br />
+								S tem sam določiš poljubno disperzijo za spodnji medij. <br /><br />
 								<br /><br />
 							</b>
 						</span>		
@@ -1703,43 +1825,54 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<hr />
-				<h2>BLIŽNJICE</h2>
+				<h2>PREDNASTAVLJENE VREDNOSTI</h2>
 				
 				
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200)"> Negativna skupinska hitrost1, sk>c0</button><br />
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk>c0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
+				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101,0,20,60,200)"> Fazna hitrost pol višja od skupinske</button><br />
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101,0,20,60,200)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101,0,20,60,200, 30,0)"> Fazna hitrost pol višja od skupinske</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101,0,20,60,200, 30,0)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
+				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200)"> Skupinska hitrost višja od fazne</button><br />				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,  446,330,0,105,133,  157,0,20,60,200)"> Skupinska hitrost višja od fazne in c0</button><br />
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne</button><br />				
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,  446,330,0,105,133,  157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne in c0</button><br />
 
-												<!--			time,radio_id_manual, makrCurves, showReflecterRay, range_refracted_raylenght,
+												<!--			time, radio_id_manual, makrCurves, showReflecterRay, range_refracted_raylenght,
 																range_frequency1, range_frequency2, theta1, range_n1, range_n2,
-																range_n2z2, markFields, range_speed, range_sampling, range_dotSize) {
+																range_n2z2, markFields, range_speed, range_sampling, range_dotSize
+																range_amplitude, markFronts, radio_id_specialmedium
 												-->
 				<br />
-				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,832,0,85,-62, 62,0,1,60,200)"> Fazna hitrost 0, skupinska pozitivna smer</button><br />
-				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,708,0,85,-62, 62,0,1,60,200)"> Fazna hitrost 0, skupinska negativna smer</button><br />
-			
-
-				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 518,354,0,55,-92, 147,0,1,60,200)"> Fazna hitrostnegativna , skupinska pozitivna=0</button><br /><br />
+				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,832,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska pozitivna smer</button><br />
+				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,708,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska negativna smer</button><br />
+							
 
 
+				<button onclick="setSignalSimulationParameters( 300,	1,		1,		0,		23, 
+																518,	354,	0,		55,		-92, 
+																147,	0,		1,		60,		200, 
+																30,		0)"> Fazna hitrostnegativna , skupinska pozitivna=0</button><br /><br />
 
-
-
-
-				<button onclick="setSignalSimulationParameters(1000,1,0,0,7,900,900,369,160,290,214,1,5,267,325)"> Interferenčni vzorec</button><br /><br />
-
-
-				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
 
 				
+				<button onclick="setSignalSimulationParameters(	1000,	1,		0,		0,		23, 
+																446,	370,	3,		105,	115, 
+																149,	1,		5,		60,		426, 
+																125,	1								)"> Frontni pogled</button><br />
+
+				
+				
+				<button onclick="setSignalSimulationParameters( 0,		0,		1,		0,		23, 
+																167,	242,	0,		102,	'x', 
+																'x',	0,		20,		60,		250, 
+																20,		0,		1)"> k=konst za vse frekvence</button><br /><br />
+
+				
+
+
 				
 				<br />
 				<br />
@@ -1764,6 +1897,11 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 								<br /><br />
 							</b>
 						</span>	
+				<div class="button_cont" align="center"><a class="example_d" rel="nofollow noopener" onclick="downloadCanvas()">  IZVOZI V PNG  </a></div>				
+
+						
+						
+						
 		 </div>
 			
 			<div class="column" id="desni">    
@@ -1774,7 +1912,7 @@ TEST 15:<span id="test15">ready</span> <br /> -->
 				<div id="spredej">
 					<!--  SIMULACIJA -->
 					<canvas id="myCanvas">Your browser does not support the HTML5 canvas tag.</canvas>
-					<a href="https://youtu.be/kMSgE62S6oo?t=117" style="float:right; font-size: 10px; color:gray;"> By the way, light is actually particles, not waves: https://youtu.be/kMSgE62S6oo?t=117</a>
+					<a href="https://youtu.be/kMSgE62S6oo?t=117" style="float:right; font-size: 10px; color:gray;"> By the way, here's how light is actually particles, not waves: https://youtu.be/kMSgE62S6oo?t=117</a>
 				</div>
 				
 				<!-- MESSAGES IN THE POPUPS -->
