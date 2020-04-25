@@ -509,10 +509,10 @@ function draw(ctx1,canvas) {
 			ctx1.beginPath();
 			ctx1.fillStyle = "green";
 			ctx1.font = "bold 15px Lucida Console";
-			fillTextkaro("n1(" + fTHz + " THz)= "+Math.round(n1ray1*100)/100,1,4,ctx1,DPmm) 
-			fillTextkaro("n1(" + fTHz2 + " THz)= "+Math.round(n1ray2*100)/100,1,5,ctx1,DPmm) 
-			fillTextkaro("n2 (" + fTHz + " THz)= "+Math.round(n2ray1*100)/100,1,17,ctx1,DPmm) 
-			fillTextkaro("n2 (" + fTHz2 + " THz)= "+Math.round(n2ray2*100)/100,1,18,ctx1,DPmm) 
+			fillTextkaro("n1(" + fTHz + " THz)= "+n1ray1.toFixed(4),1,4,ctx1,DPmm) 
+			fillTextkaro("n1(" + fTHz2 + " THz)= "+n1ray2.toFixed(4),1,5,ctx1,DPmm) 
+			fillTextkaro("n2 (" + fTHz + " THz)= "+n2ray1.toFixed(4),1,17,ctx1,DPmm) 
+			fillTextkaro("n2 (" + fTHz2 + " THz)= "+n2ray2.toFixed(4),1,18,ctx1,DPmm) 
 			ctx1.stroke();	
 			
 			// THETA
@@ -558,7 +558,9 @@ function draw(ctx1,canvas) {
 				ctx1.beginPath();
 				ctx1.fillStyle = "#303030";
 
-				fillTextkaro("f[žarek 1] = "+fTHz+" THz",pozX1,pozY1,ctx1,DPmm) 	
+				fillTextkaro("f[žarek 1] = "+fTHz+" THz",pozX1,pozY1-1,ctx1,DPmm) 
+				fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz,1).toFixed(3)+" μm",pozX1,pozY1,ctx1,DPmm) 	
+				
 				
 				fillTextkaro("Θ = "+theta1deg+"°",pozX1,pozY1+2,ctx1,DPmm); 	
 				fillTextkaro("Θr = "+angle_refraction_ray1deg.toFixed(1)+"°",pozX1+6,pozY1+2,ctx1,DPmm); 	
@@ -617,7 +619,9 @@ function draw(ctx1,canvas) {
 				ctx1.fillStyle = "#303030";
 
 
-				fillTextkaro("f[žarek 2] = "+fTHz2+" THz",pozX2,pozY1,ctx1,DPmm) 		
+				fillTextkaro("f[žarek 2] = "+fTHz2+" THz",pozX2,pozY1-1,ctx1,DPmm) 		
+				fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz2,1).toFixed(3)+" μm",pozX2,pozY1,ctx1,DPmm) 	
+				
 				
 				fillTextkaro("Θ = "+theta2deg+"°",pozX2,pozY1+2,ctx1,DPmm); 
 				fillTextkaro("Θr = "+angle_refraction_ray2deg.toFixed(1)+"°",pozX2+6,pozY1+2,ctx1,DPmm); 	
@@ -699,7 +703,33 @@ function draw(ctx1,canvas) {
 function getDispersiveN(n,fTHz,dispersivity) {
 	//return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
 	//return (n+Math.pow(fTHz/370,30));					// n is linearly related to f
-	return (n+Math.pow(fTHz/100*n,dispersivity/2))
+	//return (n+Math.pow(fTHz/100*n,dispersivity/2))
+	
+	// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
+
+	var A=0.6961663;
+	var B=0.0684043;
+	var C=0.4079426;
+	var D=0.1162414;
+	var E=0.8974794;
+	var F=9.896161;
+	var L=calculate_wavelenght(fTHz,1);
+	
+	var Asq=Math.pow(A,2);
+	var Bsq=Math.pow(B,2);
+	var Csq=Math.pow(C,2);
+	var Dsq=Math.pow(D,2);
+	var Esq=Math.pow(E,2);
+	var Fsq=Math.pow(F,2);
+	var Lsq=Math.pow(L,2);
+
+	var n = 1 + (  (A*Lsq) / ( Lsq - Bsq )  ) + (  (C*Lsq)/( Lsq - Dsq )  ) + (  (E*Lsq)/( Lsq - Fsq )  );
+	var n = Math.sqrt(n);
+
+
+
+
+	return n;
 }
 
 function calculateReflectance(n1,n2,thetaRad,pol_choice) {
@@ -879,7 +909,7 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay)
 	ctx1.translate(-rotatex,-rotatey);
 	
 	// Calculated
-	var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
+	//var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
 	var k1 = 2*Math.PI/lambda1;								// Wavenumber in 1/micrometers
 	
 	
@@ -919,6 +949,14 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay)
 		} else if(document.getElementById("markFields").checked == '1'){
 			ctx1.globalAlpha = 0.5;		
 			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+		} else if (document.getElementById("markLines").checked == '1'){
+			// Only every sampling/kth sample.		// MAYE
+			if ( (Math.floor(i-5*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
+				putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);			
+			}
+			//document.getElementById("test2").innerHTML=how_many_samples
+			//document.getElementById("test3").innerHTML=Math.floor(i-5*t/fTHz)
+			//document.getElementById("test3").innerHTML=Math.floor(sampling*lambda1);
 		}
 		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		// Returns the whole wave it just made
@@ -974,7 +1012,7 @@ function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 
 function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
 	ctx1.fillStyle = 'purple';
-	ctx1.fillRect(xStart+mmppx,yStart+f1, 30, 30);			// Makes dotss
+	ctx1.fillRect(xStart+mmppx,yStart, 2, 50);			// Makes dotss
 }
 
 function putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
@@ -1152,8 +1190,7 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 		if(document.getElementById("markPoins").checked == '1'){	
-			//putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 		} else if(document.getElementById("markFronts").checked == '1'){	
 			putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 		} else if(document.getElementById("markFields").checked == '1'){
@@ -1177,7 +1214,7 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 
 function calculate_wavelenght(fTHz,n) {						// Takes n and f in Thz
 	var c0mmpms=299792458									// kilometers per second == milimeters per microseconds
-	var lambda_micrometers=c0mmpms/n/fTHz/1000000;			// in micrometers
+	var lambda_micrometers=c0mmpms/(n*fTHz*1000000);			// in micrometers,,,Freakin floating poit weirdness
 	return lambda_micrometers;
 }
 
@@ -1408,9 +1445,21 @@ document.getElementById("range_n2z2").value=range_n2z2
 <body onLoad="init();">
 
 
-TEST A:<span id="test1">ready</span></br>
-TEST B:<span id="test2">ready</span></br>
-TEST C:<span id="test3">ready</span> <br />
+TEST 1:<span id="test1">ready</span></br>
+TEST 2:<span id="test2">ready</span></br>
+TEST 3:<span id="test3">ready</span> <br />
+TEST 4:<span id="test4">ready</span></br>
+TEST 5:<span id="test5">ready</span></br>
+TEST 6:<span id="test6">ready</span> <br />
+TEST 7:<span id="test7">ready</span></br>
+TEST 8:<span id="test8">ready</span></br>
+TEST 9:<span id="test9">ready</span> <br />
+TEST 10:<span id="test10">ready</span></br>
+TEST 11:<span id="test11">ready</span></br>
+TEST 12:<span id="test12">ready</span> <br />
+TEST 13:<span id="test13">ready</span> <br />
+TEST 14:<span id="test14">ready</span> <br />
+TEST 15:<span id="test15">ready</span> <br />
 
  <div id="overlay_parent">
 	 <div id="overlay_content">
@@ -1468,10 +1517,10 @@ TEST C:<span id="test3">ready</span> <br />
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<h2>ŽARKI</h2>
 				<b>Frekvenca žarka 1:</b> <span id="value_frequency1"></span> THz <br />
-				<input type="range" id="range_frequency1" min="0" max="900" value="460"> <br/>
+				<input type="range" id="range_frequency1" min="50" max="900" value="460"> <br/>
 				
 				<b>Frekvenca žarka 2</b>: <span id="value_frequency2"></span> THz <br />
-				<input type="range" id="range_frequency2" min="0" max="900" value="370"> <br/>
+				<input type="range" id="range_frequency2" min="50" max="900" value="370"> <br/>
 				
 				θ - kot Theta: <span id="value_theta1"></span>° <br />
 				<input type="range" id="theta1" min="0" max="900" value="250"></br>
@@ -1492,6 +1541,7 @@ TEST C:<span id="test3">ready</span> <br />
 				Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
 				Povezane točke: <input type="radio" name="pointsOrFronts"  id="markFronts" checked="1"> |
 				Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1"> 				
+				Linije: <input type="radio" name="pointsOrFronts" id="markLines" checked="1"> 				
 				
 				<br />
 				<br />
