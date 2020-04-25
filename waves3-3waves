@@ -11,7 +11,6 @@ input[type="range"] {
   width:400px;
 }
 
-
 /*MAIN PAGE DIVIDERS*/
 
 * {
@@ -71,16 +70,15 @@ input[type="range"] {
 		}
 
 
-/* */
+/* THIS ACTUALLY DOES THINGS */
 #test_canvas {
   visibility: hidden;
 }
 
-/* */
+/* BUTTON FOR POLARISATION IS THIN */
 #range_polarisation {
   width: 40px;
 }
-
 
 
 /*POPUPS*/
@@ -112,8 +110,9 @@ input[type="range"] {
   overflow: auto;
 }
 
+/*MATH EQUATIONS - https://code-boxx.com/math-equations-html*/.. .. Not yet implemented..maybe
 
-/*MATH EQUATIONS - https://code-boxx.com/math-equations-html*/.. .. Not yet implemented
+
 </style>
 </head>
 
@@ -157,34 +156,30 @@ var delta_t=delta_t_min*slowdown_factor;					// TIME RESOLUTION - this variable 
 var intervalms=20;											// How often the canvas is refreshed - every XY miliseconds (10ms = 100HZ)
 															// every intervalms the compute has to calculate the whole image.. can he do it in 20ms?
 
+		
+// MATERIALS		
+var n1;														// As set on the sliders
+var n2;														// As set on the sliders
+															// Theese guys needed as a global variable because - dispersive media - on click the button must get access to N
+var n1ray1;													// For dispersive media
+var n1ray2;		
+var n2ray1;		
+var n2ray2;
 
-// MATERIALS
-	var n1;													// As set on the sliders
-	var n2;													// As set on the sliders
-
-	// Theese guys needed as a global variable because - dispersive media - on click the button must get access to N
-	var n1ray1;												// For dispersive media
-	var n1ray2;
-	var n2ray1;
-	var n2ray2;
 
 // STOPWATCH
 var stopwatch1=0;
 var stopwatch2=0;
 
+
+// FLAGS
+flag_front=1;
+
 // PLAYGROUND
-var strk_style_before;
-var timedown;
-
-// LINES
-var startXpoints;
-var startYpoints;
-// LOADS WITH THML
-
-// POPUPS:
 
 
 
+// ON BODY LOAD
 function init() {
 	// KEYBOARD LISTENERS
 	
@@ -197,7 +192,7 @@ function init() {
 		}, false);
 		
 	
-		// IF HOLDING DOWN
+		// IF HOLDING DOWN A KEY ON KEYBOARD
 		document.body.onkeydown = function(e){
 			if (e.keyCode == 39){									// RIGHT DECREASES THETA
 				var theta=Number(document.getElementById("theta1").value);
@@ -237,103 +232,96 @@ function init() {
 			} 
 		}
 		
-
-
-	
-	// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
-	document.getElementById("markFronts").checked=0;
-	document.getElementById("markFields").checked=0;
-	document.getElementById("markPoins").checked=1;
+	// DEFAULT SETTINGS - ON LOAD?
+		// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
+		document.getElementById("makrCurves").checked=1;
+		document.getElementById("markFields").checked=0;
+		document.getElementById("markPoins").checked=0;
+		document.getElementById("markFronts").checked=0;
 	
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	// Backround Canvas
-	var canvas2 = document.getElementById("background_canvas");
-	canvas2.width=canvasWidth;
-	canvas2.height=canvasHeight;
-	var ctx2 = canvas2.getContext("2d");	
-	
-	// KARO ZVEZEK
-		var num_squares_hor=canvasWidth/(DPmm/2)-4;
-		var num_squares_ver=Math.floor(canvasHeight/(DPmm/2)-6);
-		drawMathPaper(DPmm,DPmm,num_squares_hor,num_squares_ver,DPmm/2,ctx2);							// karo zvezek
-																										//	block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx
-	// PAPER FRAME
-		ctx2.setLineDash([]);						// Normals traight line
-		ctx2.beginPath();
-		ctx2.strokeStyle = '#585858';	
-		ctx2.rect(0, 0, canvas2.width, canvas2.height);								// frame
-		ctx2.stroke();
+	// Backround Canvas - these one is for shapes that don't change once loaded
+		var canvas2 = document.getElementById("background_canvas");
+		canvas2.width=canvasWidth;
+		canvas2.height=canvasHeight;
+		var ctx2 = canvas2.getContext("2d");	
 		
-	// 1 micrometer reference
-		ctx2.beginPath();
-		ctx2.strokeStyle = 'red';	
-		ctx2.rect(DPmm, DPmm*5/4, DPmm, 1);	
-		ctx2.font = "20px Lucida Console";
-		fillTextkaro("1μm",3,1,ctx2,DPmm);
-		ctx2.stroke();
+		// KARO ZVEZEK
+			var num_squares_hor=canvasWidth/(DPmm/2)-4;
+			var num_squares_ver=Math.floor(canvasHeight/(DPmm/2)-6);
+			drawMathPaper(DPmm,DPmm,num_squares_hor,num_squares_ver,DPmm/2,ctx2);		// karo zvezek
+																						//	block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx
+		// PAPER FRAME
+			ctx2.setLineDash([]);														// Normals straight line
+			ctx2.beginPath();
+			ctx2.strokeStyle = '#585858';	
+			ctx2.rect(0, 0, canvas2.width, canvas2.height);								// frame
+			ctx2.stroke();
+			
+		// 1 micrometer reference
+			ctx2.beginPath();
+			ctx2.strokeStyle = 'red';	
+			ctx2.rect(DPmm, DPmm*5/4, DPmm, 1);	
+			ctx2.font = "20px Lucida Console";
+			fillTextkaro("1μm",3,1,ctx2,DPmm);
+			ctx2.stroke();
+			
+		// Single mode fibre core 9um
+			ctx2.beginPath();
+			ctx2.rect(DPmm, DPmm*7/4, 9*DPmm, 1);										// 1 micrometer reference
+			fillTextkaro(" 9μm - ŠIRINA JEDRA ENORODOVNEGA OPTIČNEGA VLAKNA",19,2,ctx2,DPmm);
+			ctx2.stroke();
 
-		
-	// Single mode fibre core 9um
-		ctx2.beginPath();
-		ctx2.rect(DPmm, DPmm*7/4, 9*DPmm, 1);										// 1 micrometer reference
-		fillTextkaro(" 9μm - ŠIRINA JEDRA ENORODOVNEGA OPTIČNEGA VLAKNA",19,2,ctx2,DPmm);
-		ctx2.stroke();
+		//  LINES
+			ctx2.beginPath();
+			ctx2.strokeStyle = '#585858';	
+			drawCrossBorder(xCenter1,yCenter1,ctx2,DPmm);
+			drawCrossBorder(xCenter1+6*DPmm,yCenter1,ctx2,DPmm);
+			drawCrossBorder(xCenter1+12*DPmm,yCenter1,ctx2,DPmm);
+			ctx2.stroke();
 
-	//  LINES
-		ctx2.beginPath();
-		ctx2.strokeStyle = '#585858';	
-		drawCrossBorder(xCenter1,yCenter1,ctx2,DPmm);
-		drawCrossBorder(xCenter1+6*DPmm,yCenter1,ctx2,DPmm);
-		drawCrossBorder(xCenter1+12*DPmm,yCenter1,ctx2,DPmm);
-		ctx2.stroke();
-
-	// 1 micrometer reference
-		ctx2.beginPath();
-		ctx2.fillStyle = "red";							// FILLSTYLE FOR TEXT; STROKESTYLE FOR LINES
-		fillTextkaro("ŽAREK 1",9,5,ctx2,DPmm);	ctx2		// 4 desno, pet dol
-		fillTextkaro("ŽAREK 2",21,5,ctx2,DPmm);	ctx2
-		fillTextkaro("ŽAREK 1 + ŽAREK 2",31,5,ctx2,DPmm);	ctx2
-		ctx2.stroke();
-		
+		// 1 micrometer reference
+			ctx2.beginPath();
+			ctx2.fillStyle = "red";														// FILLSTYLE FOR TEXT; STROKESTYLE FOR LINES
+			fillTextkaro("ŽAREK 1",9,5,ctx2,DPmm);	ctx2								// 4 desno, pet dol
+			fillTextkaro("ŽAREK 2",21,5,ctx2,DPmm);	ctx2
+			fillTextkaro("ŽAREK 1 + ŽAREK 2",31,5,ctx2,DPmm);	 
+			ctx2.stroke();
+			
 
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	// Animated Canvas
-	canvas1 = document.getElementById("myCanvas");
-	canvas1.width=canvasWidth;
-	canvas1.height=canvasHeight;
+	// Animated Canvas - THIS IS THE ONE THAT CHANGES 40 times a secon...
+			canvas1 = document.getElementById("myCanvas");
+			canvas1.width=canvasWidth;
+			canvas1.height=canvasHeight;
+			
+			var ctx1 = canvas1.getContext("2d");
+		//setInterval(draw,intervalms);													// Calls function draw every intervalms miliseconds
 	
-	var ctx1 = canvas1.getContext("2d");
-	//setInterval(draw,intervalms);									// Calls function draw every intervalms miliseconds
+	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	// Excute function draw for ctx1 a million times and disegard javasript floating points problems because noone will be running this for more than 10 seconds,,will they?
 	setInterval( function() { draw(ctx1,canvas1); }, intervalms );
-	//draw();
+	
 	
 }
 
-// Places  text relative to the math square
-function fillTextkaro(tekst,kvadratek_x,kvadratek_y,ctx,DPmm) {
-	ctx.fillText(tekst, DPmm+(kvadratek_x-1)*DPmm/2+DPmm/20,DPmm+(kvadratek_y)*DPmm/2-DPmm/10);
-}
-
-function drawCrossBorder(x,y,ctx2,DPmm) {
-	var width=5.5
-	ctx2.rect(x-DPmm*width/2, y , DPmm*width, 2);		// Horizontal Line
-	ctx2.rect(x, y-DPmm*3, 2, DPmm*6);		// Vertical line
-}
-
-// FUNCTION THAT IS BEEING CALLED EVERY XYZ MILISECOND FOR ANIMATION
+// THIS ONE GETS EXECUTED MANY TIMES PER SECONS
 function draw(ctx1,canvas) {
 
 	// CLEAR CANVAS
 		ctx1.clearRect(0,0, canvas.width,canvas.height);								
 	
     //---- SET SIMULATION SAMPLING
-			sampling=document.getElementById("range_sampling").value;			// SETS GLOBAL VARIABLE
+			sampling=document.getElementById("range_sampling").value;				// SETS GLOBAL VARIABLE
 			document.getElementById("value_sampling").innerHTML=sampling;
 
     //---- SET SIMULATION DOT SIZE
 			pixelSize=document.getElementById("range_dotSize").value/100;			// SETS GLOBAL VARIABLE
 			document.getElementById("value_dotSize").innerHTML=pixelSize;	
-	
+			
+	//---- SET AMPLITUDE
+			Amp=document.getElementById("range_amplitude").value;					// SETS GLOBAL VARIABLE
+			document.getElementById("value_amplitude").innerHTML=Amp;	
 	
 	//---- TIME INFO ----
 		// GET SPEED FROM USER, APPLY SPEED, SHOW USER WHAT SPEED IS CURRENTLY IN THE RUN
@@ -349,42 +337,8 @@ function draw(ctx1,canvas) {
 			t+=delta_t
 		}
 		document.getElementById("value_time").innerHTML=(t/1000).toFixed(2);
-
-	// DRAW POLARIZATION ARROW
-		// polarization arrows
-			ctx1.beginPath();
-			ctx1.strokeStyle = '#585858';	
-			ctx1.lineWidth = 3;
-			drawLineWithArrows(0.5*DPmm,4*DPmm,2*DPmm,5.5*DPmm,15,15,false,true,ctx1)		// Carefu, strok inside already
-			ctx1.stroke();
-						
-
-
-			if (document.getElementById("range_polarisation").value==0) {
-				ctx1.beginPath();
-				ctx1.strokeStyle = 'red';	
-				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-				ctx1.stroke();
-			
-				ctx1.beginPath();
-				ctx1.strokeStyle = '#585858';	
-				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-				ctx1.stroke();
-			} else {
-				ctx1.beginPath();
-				ctx1.strokeStyle = 'red';	
-				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-				ctx1.stroke();
 		
-				ctx1.beginPath();
-				ctx1.strokeStyle = '#585858';	
-				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
-				ctx1.stroke();
-			}
-
-	//  HIDE settings setting n2 of second ray, if its no chosen
-
-		
+	//---- USER INPUT IS ADAPTIVE
 		// WHEN TO SHOW n1 slider??.. .
 		if (	document.getElementById("radio_id_nonedispersive").checked == true ||
 				document.getElementById("radio_id_onlybottmdispersive").checked == true ||
@@ -419,434 +373,352 @@ function draw(ctx1,canvas) {
 			document.getElementById("hidden_dropdownLeft").style.visibility = 'hidden';
 		}
 		
-		// When to show dropdown menu for bottom material = right dropdown?
+		// When to show dropdown menu for BOTTOM material = right dropdown?
 		if (	document.getElementById("radio_id_onlybottmdispersive").checked == true ||
 				document.getElementById("radio_id_bothdispersive").checked == true) {
 			document.getElementById("hidden_dropdownRight").style.visibility = 'visible';
 		} else {
 			document.getElementById("hidden_dropdownRight").style.visibility = 'hidden';
 		}		
+	//---- DRAWING
+		// DRAW POLARIZATION ARROW
+			ctx1.beginPath();
+			ctx1.strokeStyle = '#585858';	
+			ctx1.lineWidth = 3;
+			drawLineWithArrows(0.5*DPmm,4*DPmm,2*DPmm,5.5*DPmm,15,15,false,true,ctx1)		// Carefu, strok inside already
+			ctx1.stroke();
+						
+			if (document.getElementById("range_polarisation").value==0) {
+				ctx1.beginPath();
+				ctx1.strokeStyle = 'red';	
+				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			
+				ctx1.beginPath();
+				ctx1.strokeStyle = '#585858';	
+				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			} else {
+				ctx1.beginPath();
+				ctx1.strokeStyle = 'red';	
+				drawLineWithArrows(0.85*DPmm,4.95*DPmm,1.65*DPmm,4.55*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
 		
-
-	
-		// DRAW BOTH RAYS
-		//(fTHz,raylength,locationx,locationy,Amp)
-		// Source of Frequency?
-		
-		// Get frequency for left most wave
-	
-		// LEFT FREQUENCY RAY
-		var fTHz=document.getElementById("range_frequency1").value;
-		document.getElementById("value_frequency1").innerHTML=fTHz;
-		
-		var fTHz2=document.getElementById("range_frequency2").value;
-		document.getElementById("value_frequency2").innerHTML=fTHz2;		
-		
-		// Material Above
-		n1=document.getElementById("range_n1").value/100;
-		document.getElementById("value_n1").innerHTML=n1;
-		
-		// Material below
-		n2=document.getElementById("range_n2").value/100;
-		document.getElementById("value_n2").innerHTML=n2;
-
-		// Material below for ray 2 if enabled
-		n2z2=document.getElementById("range_n2z2").value/100;
-		document.getElementById("value_n2z2").innerHTML=n2z2;
+				ctx1.beginPath();
+				ctx1.strokeStyle = '#585858';	
+				drawLineWithArrows(1.25*DPmm,4.25*DPmm,1.25*DPmm,5.25*DPmm,5,5,true,true,ctx1)		// Carefu, strok inside already
+				ctx1.stroke();
+			}
 
 
-		// IS MEDIA DISPERSIVE; WHICH AND HOW?
-			// check which option is selected
-			var radios = document.getElementsByName('radio_dispersion');
-			var materialTop=document.getElementById('menu_material_top').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
-			var materialBottom=document.getElementById('menu_material_bottom').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
-//document.getElementById("test1").innerHTML=materialTop
-//document.getElementById("test2").innerHTML=materialBottom
-
-
-			for (var i = 0, length = radios.length; i < length; i++) {
-				// Non dispersive media
-				if (radios[0].checked) {
-					n1ray1=n1;
-					n1ray2=n1;
-					n2ray1=n2;
-					n2ray2=n2;
-					break;
+		// DRAW LEFT AND MIDDLE RAYS ("BOTH")
+			// Get frequency for left most wave from user
+				// LEFT FREQUENCY RAY
+				var fTHz=document.getElementById("range_frequency1").value;
+				document.getElementById("value_frequency1").innerHTML=fTHz;
 				
-				// TOP Media Dispersive
-				} else if (radios[1].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,materialTop);	
-					n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
-					n2ray1=n2;	
-					n2ray2=n2;	
-					break;
+				var fTHz2=document.getElementById("range_frequency2").value;
+				document.getElementById("value_frequency2").innerHTML=fTHz2;		
+		
+			// GET material details from user
+			// Material Above
+				n1=document.getElementById("range_n1").value/100;
+				document.getElementById("value_n1").innerHTML=n1;
 				
-				// BOTTOM Media Dispersive
-				} else if (radios[2].checked) {
-					n1ray1=n1;	
-					n1ray2=n1;
-					n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
-					n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
-					break;
+			// Material below
+				n2=document.getElementById("range_n2").value/100;
+				document.getElementById("value_n2").innerHTML=n2;
+
+			// Material below for ray 2 if enabled
+				n2z2=document.getElementById("range_n2z2").value/100;
+				document.getElementById("value_n2z2").innerHTML=n2z2;
+
+
+			// IS MEDIA DISPERSIVE; WHICH AND HOW? - depends on what n is applied
+				// check which option is selected
+				var radios = document.getElementsByName('radio_dispersion');
+				var materialTop=document.getElementById('menu_material_top').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+				var materialBottom=document.getElementById('menu_material_bottom').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+
+				for (var i = 0, length = radios.length; i < length; i++) {
+					// Non dispersive media
+					if (radios[0].checked) {
+						n1ray1=n1;
+						n1ray2=n1;
+						n2ray1=n2;
+						n2ray2=n2;
+						break;
 					
-				// BOTH Media Dispersive
-				} else if (radios[3].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,materialTop);	
-					n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
-					n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
-					n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
-					break;
+					// TOP Media Dispersive
+					} else if (radios[1].checked) {
+						n1ray1=getDispersiveN(n1,fTHz,materialTop);	
+						n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
+						n2ray1=n2;	
+						n2ray2=n2;	
+						break;
 					
-				// Specially dispersive media on which all wavelenghts are the same
-				} else if (radios[4].checked) {
-					n1ray1=n1;
-					n1ray2=n1;	
-					n2ray1=500/fTHz;
-					n2ray2=500/fTHz2;	
-					break;
-				// If we want to set n for ray 1 and ray 2 separately
-				} else if (radios[5].checked) {
-					n1ray1=n1;
-					n1ray2=n1;	
-					n2ray1=n2;
-					n2ray2=n2z2;	
-					break;
-				}
-			}		
-	
-	
-
-		// Left most 3 rays. Saving just for the summed wav. It's an array of 2 arrays
-		//ctx1.beginPath();  // SO it calculates all before stroking. but that means no color change.
+					// BOTTOM Media Dispersive
+					} else if (radios[2].checked) {
+						n1ray1=n1;	
+						n1ray2=n1;
+						n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
+						n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
+						break;
+						
+					// BOTH Media Dispersive
+					} else if (radios[3].checked) {
+						n1ray1=getDispersiveN(n1,fTHz,materialTop);	
+						n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
+						n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
+						n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
+						break;
+						
+					// Specially dispersive media on which all wavelenghts are the same
+					} else if (radios[4].checked) {
+						n1ray1=n1;
+						n1ray2=n1;	
+						n2ray1=500/fTHz;
+						n2ray2=500/fTHz2;	
+						break;
+					// If we want to set n for ray 1 and ray 2 separately
+					} else if (radios[5].checked) {
+						n1ray1=n1;
+						n1ray2=n1;	
+						n2ray1=n2;
+						n2ray2=n2z2;	
+						break;
+					}
+				}		
 		
-		//ctx1.strokeStyle = "purple";
-		var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,Amp,n1ray1,n2ray1,ctx1);
-		//ctx1.stroke();
+		// DRAW ARRAYS; SAVE DATA TO ARRAY
+			// LEFTMOST
+			var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,Amp,n1ray1,n2ray1,ctx1);
 
-		// Middle 3 rays ray
-		//ctx1.beginPath();
-		var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,Amp,n1ray2,n2ray2,ctx1);		
-		//ctx1.stroke();
-		// Sum of leftmost and middle ray. Needs raylength to get starting position	
+			// MIDDLE
+			var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+300,yCenter1,Amp,n1ray2,n2ray2,ctx1);		
 
-		// RIGHT MOST RAY = RAY 1 + RAY 2
-		//ctx1.beginPath();
-		drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
-		
-		//ctx1.stroke();
+			// RIGHT MOST RAY = RAY 1 + RAY 2 -  
+			drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+600,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
 		
 		
 		
 		// DRAW LABELS ON CANVAS
 			// REFRACTIVE INDEX
-			ctx1.beginPath();
-			ctx1.fillStyle = "green";
-			ctx1.font = "bold 15px Lucida Console";
-			fillTextkaro("n1(" + fTHz + " THz)= "+n1ray1.toFixed(4),1,4,ctx1,DPmm) 
-			fillTextkaro("n1(" + fTHz2 + " THz)= "+n1ray2.toFixed(4),1,5,ctx1,DPmm) 
-			fillTextkaro("n2 (" + fTHz + " THz)= "+n2ray1.toFixed(4),1,17,ctx1,DPmm) 
-			fillTextkaro("n2 (" + fTHz2 + " THz)= "+n2ray2.toFixed(4),1,18,ctx1,DPmm) 
-			ctx1.stroke();	
+				ctx1.beginPath();
+				ctx1.fillStyle = "green";
+				ctx1.font = "bold 15px Lucida Console";
+				fillTextkaro("n1(" + fTHz + " THz)= "+n1ray1.toFixed(4),1,4,ctx1,DPmm) 
+				fillTextkaro("n1(" + fTHz2 + " THz)= "+n1ray2.toFixed(4),1,5,ctx1,DPmm) 
+				fillTextkaro("n2 (" + fTHz + " THz)= "+n2ray1.toFixed(4),1,17,ctx1,DPmm) 
+				fillTextkaro("n2 (" + fTHz2 + " THz)= "+n2ray2.toFixed(4),1,18,ctx1,DPmm) 
+				ctx1.stroke();	
 			
 			// THETA
-			fillTextkaro("Θ",10.2,11,ctx1,DPmm) 
-			fillTextkaro("Θr",11.1,20,ctx1,DPmm) 
+				fillTextkaro("Θ",10.2,11,ctx1,DPmm) 
+				fillTextkaro("Θr",11.1,20,ctx1,DPmm) 
 
-			if (document.getElementById("showCalculations").checked==1) { 	//Disabling of too much
-				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
-				//OTHER THINGS ZAREK 1
-				var c0=299792458*Math.pow(10,-9);									// Speed of light - micrometers per femtoseconds
-				var c0zg1=c0/n1ray1;							
-				var c0sp1=c0/n2ray1;
-				var lambda_zg1=c0/(fTHz*n1ray1)*1000;								// in micrometers
-				var lambda_sp1=c0/(fTHz*n2ray1)*1000;								// in micrometers
-				var omega1=2*Math.PI*fTHz/Math.pow(10,3);      						// rad/fs
-				var kzg1=2*Math.PI/lambda_zg1;				  		// rad/um
-				var ksp1=2*Math.PI/lambda_sp1;
-				var criticalAngle1=findCriticalAngle(n1ray1,n2ray1);
-				var brewsterAngle1=findBresterAngle(n1ray1,n2ray1);
-				var theta1deg=document.getElementById("theta1").value/10;
-				var theta1rad=theta1deg*Math.PI/180;
-				var reflectance1P=calculateReflectance(n1ray1,n2ray1,theta1rad,0);
-				var reflectance1S=calculateReflectance(n1ray1,n2ray1,theta1rad,1);
-				var pozY1=30;
-				var pozX1=2;
-				var angle_refraction_ray1deg=Math.asin(Math.sin(theta1rad)*n1ray1/n2ray1)*180/Math.PI;
+			// FANCY CALCULATIONS
+				// FOR LEFT RAY 1 BOT MEDIUM - but only if user wants
+				if (document.getElementById("showCalculations").checked==1) { 	//Disabling of too much				
+					// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
+					var c0=299792458*Math.pow(10,-9);									// Speed of light - micrometers per femtoseconds
+					var c0zg1=c0/n1ray1;							
+					var c0sp1=c0/n2ray1;
+					var lambda_zg1=c0/(fTHz*n1ray1)*1000;								// in micrometers
+					var lambda_sp1=c0/(fTHz*n2ray1)*1000;								// in micrometers
+					var omega1=2*Math.PI*fTHz/Math.pow(10,3);      						// rad/fs
+					var kzg1=2*Math.PI/lambda_zg1;				  		// rad/um
+					var ksp1=2*Math.PI/lambda_sp1;
+					var criticalAngle1=findCriticalAngle(n1ray1,n2ray1);
+					var brewsterAngle1=findBresterAngle(n1ray1,n2ray1);
+					var theta1deg=document.getElementById("theta1").value/10;
+					var theta1rad=theta1deg*Math.PI/180;
+					var reflectance1P=calculateReflectance(n1ray1,n2ray1,theta1rad,0);
+					var reflectance1S=calculateReflectance(n1ray1,n2ray1,theta1rad,1);
+					var pozY1=30;
+					var pozX1=2;
+					var angle_refraction_ray1deg=Math.asin(Math.sin(theta1rad)*n1ray1/n2ray1)*180/Math.PI;
 
+					
+					// If critical angle doesn't exist, button for calculating won't work, and its not my fault.
+					if (isNaN(criticalAngle1)) {	
+						document.getElementById("message_noCriticalAngle").innerHTML="Kritični kot za žarek 1 <b>NE</b> obstaja";
+					} else {
+						document.getElementById("message_noCriticalAngle").innerHTML="";
+					}
+					
+					ctx1.beginPath();
+					ctx1.fillStyle = "red";
+					ctx1.font = "bold 22px Lucida Console";
+					
+					fillTextkaro("ŽAREK 1",pozX1,pozY1-2,ctx1,DPmm) 	
+					ctx1.stroke();	
+					
+					ctx1.beginPath();
+					ctx1.fillStyle = "#303030";
+
+					fillTextkaro("f[žarek 1] = "+fTHz+" THz",pozX1,pozY1-1,ctx1,DPmm) 
+					fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz,1).toFixed(3)+" μm",pozX1,pozY1,ctx1,DPmm) 	
+					
+					fillTextkaro("Θ = "+theta1deg+"°",pozX1,pozY1+2,ctx1,DPmm); 	
+					fillTextkaro("Θr = "+angle_refraction_ray1deg.toFixed(1)+"°",pozX1+6,pozY1+2,ctx1,DPmm); 	
+
+					fillTextkaro("ΘB = "+brewsterAngle1+"°",pozX1,pozY1+3,ctx1,DPmm); 	
+					fillTextkaro("ΘC = "+criticalAngle1+"°",pozX1,pozY1+4,ctx1,DPmm); 								
+
+					fillTextkaro("Ts = "+Math.round(reflectance1S*1000)/1000,pozX1,pozY1+6,ctx1,DPmm); 
+					fillTextkaro("Tp = "+Math.round(reflectance1P*1000)/1000,pozX1,pozY1+7,ctx1,DPmm); 
+					
+					// MEDIUM ON TOP
+					fillTextkaro("c[\u21D1]= "+(c0zg1).toFixed(9)+" μm/fs = "+(1/n1ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+9,ctx1,DPmm);
+					fillTextkaro("λ[\u21D1]= "+lambda_zg1.toFixed(3)+" μm",pozX1,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
+					fillTextkaro("k[\u21D1]= "+kzg1.toFixed(3)+" rad/μm",pozX1,pozY1+11,ctx1,DPmm);  
+					fillTextkaro("ω[\u21D1]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+12,ctx1,DPmm);  
+					fillTextkaro("ω/k[\u21D1]= "+(omega1/kzg1).toFixed(9)+" μm/fs",pozX1,pozY1+13,ctx1,DPmm); 			
+
+					// MEDIUM ON BOTTOM
+					fillTextkaro("c[\u2B07]= "+(c0sp1).toFixed(9)+" μm/fs = "+(1/n2ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+15,ctx1,DPmm);	
+					fillTextkaro("λ[\u2B07]= "+lambda_sp1.toFixed(3)+" μm",pozX1,pozY1+16,ctx1,DPmm); 
+					fillTextkaro("k[\u2B07]= "+ksp1.toFixed(3)+" rad/μm",pozX1,pozY1+17,ctx1,DPmm); 
+					fillTextkaro("ω[\u2B07]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+18,ctx1,DPmm);
+					fillTextkaro("ω/k[\u2B07]= "+(omega1/ksp1).toFixed(9)+" μm/fs",pozX1,pozY1+19,ctx1,DPmm); 	
+					
+
+					//OTHER THINGS ZAREK 2
+					// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
+
+					var c0=299792458*Math.pow(10,-9);									// Speed of light - micrometers per femtoseconds
+					var c0zg2=c0/n1ray2;							
+					var c0sp2=c0/n2ray2;
+					var lambda_zg2=c0/(fTHz2*n1ray2)*1000;								// in micrometers
+					var lambda_sp2=c0/(fTHz2*n2ray2)*1000;								// in micrometers
+					var omega2=2*Math.PI*fTHz2/Math.pow(10,3);      					// rad/fs
+					var kzg2=2*Math.PI/lambda_zg2;				  						// rad/um
+					var ksp2=2*Math.PI/lambda_sp2;
+					var pozX2=25
+					var criticalAngle2=findCriticalAngle(n1ray2,n2ray2);
+					var brewsterAngle2=findBresterAngle(n1ray2,n2ray2);
+					var theta2deg=theta1deg;
+					var theta2rad=theta1rad;
+					var reflectance2P=calculateReflectance(n1ray2,n2ray2,theta1rad,0);
+					var reflectance2S=calculateReflectance(n1ray2,n2ray2,theta1rad,1);
+					var messageGroupVelocity="Rezultat smiselen le, če ω1 ≈ ω2 in k1 ≈ k2  oziroma B < fc";
+					var angle_refraction_ray2deg=Math.asin(Math.sin(theta1rad)*n1ray2/n2ray2)*180/Math.PI;
+
+					//  7 fucking lined to change the font color of one text
+					ctx1.beginPath();
+					ctx1.fillStyle = "red";
+					fillTextkaro("ŽAREK 2",pozX2,pozY1-2,ctx1,DPmm) 	
+					ctx1.stroke();	
+					ctx1.beginPath();
+					ctx1.fillStyle = "#303030";
+
+
+					fillTextkaro("f[žarek 2] = "+fTHz2+" THz",pozX2,pozY1-1,ctx1,DPmm) 		
+					fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz2,1).toFixed(3)+" μm",pozX2,pozY1,ctx1,DPmm) 	
+					
+					
+					fillTextkaro("Θ = "+theta2deg+"°",pozX2,pozY1+2,ctx1,DPmm); 
+					fillTextkaro("Θr = "+angle_refraction_ray2deg.toFixed(1)+"°",pozX2+6,pozY1+2,ctx1,DPmm); 	
+					fillTextkaro("ΘB = "+brewsterAngle2+"°",pozX2,pozY1+3,ctx1,DPmm); 					
+					fillTextkaro("ΘC = "+criticalAngle2+"°",pozX2,pozY1+4,ctx1,DPmm); 								
+					
+					fillTextkaro("Ts = "+Math.round(reflectance2S*1000)/1000,pozX2,pozY1+6,ctx1,DPmm); 
+					fillTextkaro("Tp = "+Math.round(reflectance2P*1000)/1000,pozX2,pozY1+7,ctx1,DPmm); 				
+					
+					// MEDIUM ON TOP
+					fillTextkaro("c[\u21D1]= "+(c0zg2).toFixed(9)+" μm/fs = "+(1/n1ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+9,ctx1,DPmm);
+					fillTextkaro("λ[\u21D1]= "+lambda_zg2.toFixed(3)+" μm",pozX2,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
+					fillTextkaro("k[\u21D1]= "+kzg2.toFixed(3)+" rad/μm",pozX2,pozY1+11,ctx1,DPmm);  
+					fillTextkaro("ω[\u21D1]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+12,ctx1,DPmm);  
+					fillTextkaro("ω/k[\u21D1]= "+(omega2/kzg2).toFixed(9)+" μm/fs",pozX2,pozY1+13,ctx1,DPmm); 			
+					
+					// MEDIUM ON BOTTOM
+					fillTextkaro("c[\u2B07]= "+(c0sp2).toFixed(9)+" μm/fs = "+(1/n2ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+15,ctx1,DPmm);
+					fillTextkaro("λ[\u2B07]= "+lambda_sp2.toFixed(3)+" μm",pozX2,pozY1+16,ctx1,DPmm); 
+					fillTextkaro("k[\u2B07]= "+ksp2.toFixed(3)+" rad/μm",pozX2,pozY1+17,ctx1,DPmm); 
+					fillTextkaro("ω[\u2B07]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+18,ctx1,DPmm); 
+					fillTextkaro("ω/k[\u2B07]= "+(omega2/ksp2).toFixed(9)+" μm/fs",pozX2,pozY1+19,ctx1,DPmm); 			
+
+
+					//OTHER THINGS SKUPINSKA HITROST SEŠTETI ŽAREK
+					// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+		
+					
+					var pozY3=pozY1+22;
+					var deltaomegasp=omega2-omega1;
+					var deltaksp=ksp2-ksp1;
+					var deltaomegazg=omega2-omega1;
+					var deltakzg=kzg2-kzg1;				
+					
+					// IF NAN, group velocity is phase velocity, beacuse I say so and I am above nature.
+					if (isNaN(parseFloat("group_speed_top"))) {
+						group_speed_top=c0zg1;												// The zero divided by zero, this means that it's the same signal summed twice
+					}
+					
+					if (isNaN(parseFloat("group_speed_bot"))) {
+						group_speed_bot=c0sp1;												// The zero divided by zero, this means that it's the same signal summed twice
+					}
+					
+					var group_speed_top=deltaomegazg/deltakzg;			
+					var group_speed_bot=deltaomegasp/deltaksp;
+					var c0toGroupSpeedBot=Math.round(group_speed_bot/c0*1000000)/1000000;		// HOw fast is group speed compared to speed of light in vacum
+					var c0toGroupSpeedTop=Math.round(group_speed_top/c0*1000000)/1000000;		// HOw fast is group speed compared to speed of light in vacum
+
+
+					ctx1.beginPath();
+					ctx1.fillStyle = "red";
+					fillTextkaro("SEŠTETI ŽAREK:",pozX1+2,pozY3,ctx1,DPmm); 
+					ctx1.stroke();	
+					ctx1.beginPath();
+					ctx1.fillStyle = "#303030";
+					
+					fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY3+2,ctx1,DPmm); 			
+					fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY3+3,ctx1,DPmm); 
+
+					fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY3+2,ctx1,DPmm); 			
+					fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY3+3,ctx1,DPmm); 
+					
+					fillTextkaro(messageGroupVelocity,pozX1+10,pozY3,ctx1,DPmm); 			
+					fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+6,ctx1,DPmm); 			
+					fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+7		,ctx1,DPmm); 
 				
-				// HTML INFORMING FOR BUTTON
-				if (isNaN(criticalAngle1)) {	
-					document.getElementById("message_noCriticalAngle").innerHTML="Kritični kot za žarek 1 <b>NE</b> obstaja";
-				} else {
-					document.getElementById("message_noCriticalAngle").innerHTML="";
+					ctx1.stroke();	
 				}
-				
-				ctx1.beginPath();
-				ctx1.fillStyle = "red";
-				ctx1.font = "bold 22px Lucida Console";
-				
-				fillTextkaro("ŽAREK 1",pozX1,pozY1-2,ctx1,DPmm) 	
-				ctx1.stroke();	
-				
-				ctx1.beginPath();
-				ctx1.fillStyle = "#303030";
 
-				fillTextkaro("f[žarek 1] = "+fTHz+" THz",pozX1,pozY1-1,ctx1,DPmm) 
-				fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz,1).toFixed(3)+" μm",pozX1,pozY1,ctx1,DPmm) 	
-				
-				
-				fillTextkaro("Θ = "+theta1deg+"°",pozX1,pozY1+2,ctx1,DPmm); 	
-				fillTextkaro("Θr = "+angle_refraction_ray1deg.toFixed(1)+"°",pozX1+6,pozY1+2,ctx1,DPmm); 	
-
-				fillTextkaro("ΘB = "+brewsterAngle1+"°",pozX1,pozY1+3,ctx1,DPmm); 	
-				fillTextkaro("ΘC = "+criticalAngle1+"°",pozX1,pozY1+4,ctx1,DPmm); 								
-
-				fillTextkaro("Ts = "+Math.round(reflectance1S*1000)/1000,pozX1,pozY1+6,ctx1,DPmm); 
-				fillTextkaro("Tp = "+Math.round(reflectance1P*1000)/1000,pozX1,pozY1+7,ctx1,DPmm); 
-				
-				// MEDIUM ON TOP
-				fillTextkaro("c[\u21D1]= "+(c0zg1).toFixed(9)+" μm/fs = "+(1/n1ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+9,ctx1,DPmm);
-				fillTextkaro("λ[\u21D1]= "+lambda_zg1.toFixed(3)+" μm",pozX1,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
-				fillTextkaro("k[\u21D1]= "+kzg1.toFixed(3)+" rad/μm",pozX1,pozY1+11,ctx1,DPmm);  
-				fillTextkaro("ω[\u21D1]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+12,ctx1,DPmm);  
-				fillTextkaro("ω/k[\u21D1]= "+(omega1/kzg1).toFixed(9)+" μm/fs",pozX1,pozY1+13,ctx1,DPmm); 			
-
-
-				// MEDIUM ON BOTTOM
-				fillTextkaro("c[\u2B07]= "+(c0sp1).toFixed(9)+" μm/fs = "+(1/n2ray1).toFixed(3)+"\u00B7c0",pozX1,pozY1+15,ctx1,DPmm);	
-				fillTextkaro("λ[\u2B07]= "+lambda_sp1.toFixed(3)+" μm",pozX1,pozY1+16,ctx1,DPmm); 
-				fillTextkaro("k[\u2B07]= "+ksp1.toFixed(3)+" rad/μm",pozX1,pozY1+17,ctx1,DPmm); 
-				fillTextkaro("ω[\u2B07]= "+omega1.toFixed(3)+" rad/fs",pozX1,pozY1+18,ctx1,DPmm);
-				fillTextkaro("ω/k[\u2B07]= "+(omega1/ksp1).toFixed(9)+" μm/fs",pozX1,pozY1+19,ctx1,DPmm); 	
-				
-
-
-
-				//OTHER THINGS ZAREK 2
-				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+v
-
-				var c0=299792458*Math.pow(10,-9);									// Speed of light - micrometers per femtoseconds
-				var c0zg2=c0/n1ray2;							
-				var c0sp2=c0/n2ray2;
-				var lambda_zg2=c0/(fTHz2*n1ray2)*1000;								// in micrometers
-				var lambda_sp2=c0/(fTHz2*n2ray2)*1000;								// in micrometers
-				var omega2=2*Math.PI*fTHz2/Math.pow(10,3);      					// rad/fs
-				var kzg2=2*Math.PI/lambda_zg2;				  						// rad/um
-				var ksp2=2*Math.PI/lambda_sp2;
-				var pozX2=25
-				var criticalAngle2=findCriticalAngle(n1ray2,n2ray2);
-				var brewsterAngle2=findBresterAngle(n1ray2,n2ray2);
-				var theta2deg=theta1deg;
-				var theta2rad=theta1rad;
-				var reflectance2P=calculateReflectance(n1ray2,n2ray2,theta1rad,0);
-				var reflectance2S=calculateReflectance(n1ray2,n2ray2,theta1rad,1);
-				var messageGroupVelocity="Rezultat smiselen le, če ω1 ≈ ω2 in k1 ≈ k2  oziroma B < fc";
-				var angle_refraction_ray2deg=Math.asin(Math.sin(theta1rad)*n1ray2/n2ray2)*180/Math.PI;
-
-				//  7 fucking lined to change the font color of one text
-				ctx1.beginPath();
-				ctx1.fillStyle = "red";
-				fillTextkaro("ŽAREK 2",pozX2,pozY1-2,ctx1,DPmm) 	
-				ctx1.stroke();	
-				ctx1.beginPath();
-				ctx1.fillStyle = "#303030";
-
-
-				fillTextkaro("f[žarek 2] = "+fTHz2+" THz",pozX2,pozY1-1,ctx1,DPmm) 		
-				fillTextkaro("λ[vakum] = "+calculate_wavelenght(fTHz2,1).toFixed(3)+" μm",pozX2,pozY1,ctx1,DPmm) 	
-				
-				
-				fillTextkaro("Θ = "+theta2deg+"°",pozX2,pozY1+2,ctx1,DPmm); 
-				fillTextkaro("Θr = "+angle_refraction_ray2deg.toFixed(1)+"°",pozX2+6,pozY1+2,ctx1,DPmm); 	
-				fillTextkaro("ΘB = "+brewsterAngle2+"°",pozX2,pozY1+3,ctx1,DPmm); 					
-				fillTextkaro("ΘC = "+criticalAngle2+"°",pozX2,pozY1+4,ctx1,DPmm); 								
-				
-				fillTextkaro("Ts = "+Math.round(reflectance2S*1000)/1000,pozX2,pozY1+6,ctx1,DPmm); 
-				fillTextkaro("Tp = "+Math.round(reflectance2P*1000)/1000,pozX2,pozY1+7,ctx1,DPmm); 				
-				
-				// MEDIUM ON TOP
-				fillTextkaro("c[\u21D1]= "+(c0zg2).toFixed(9)+" μm/fs = "+(1/n1ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+9,ctx1,DPmm);
-				fillTextkaro("λ[\u21D1]= "+lambda_zg2.toFixed(3)+" μm",pozX2,pozY1+10,ctx1,DPmm);  // 2PI * f * n / c
-				fillTextkaro("k[\u21D1]= "+kzg2.toFixed(3)+" rad/μm",pozX2,pozY1+11,ctx1,DPmm);  
-				fillTextkaro("ω[\u21D1]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+12,ctx1,DPmm);  
-				fillTextkaro("ω/k[\u21D1]= "+(omega2/kzg2).toFixed(9)+" μm/fs",pozX2,pozY1+13,ctx1,DPmm); 			
-				
-				// MEDIUM ON BOTTOM
-				fillTextkaro("c[\u2B07]= "+(c0sp2).toFixed(9)+" μm/fs = "+(1/n2ray2).toFixed(3)+"\u00B7c0",pozX2,pozY1+15,ctx1,DPmm);
-				fillTextkaro("λ[\u2B07]= "+lambda_sp2.toFixed(3)+" μm",pozX2,pozY1+16,ctx1,DPmm); 
-				fillTextkaro("k[\u2B07]= "+ksp2.toFixed(3)+" rad/μm",pozX2,pozY1+17,ctx1,DPmm); 
-				fillTextkaro("ω[\u2B07]= "+omega2.toFixed(3)+" rad/fs",pozX2,pozY1+18,ctx1,DPmm); 
-				fillTextkaro("ω/k[\u2B07]= "+(omega2/ksp2).toFixed(9)+" μm/fs",pozX2,pozY1+19,ctx1,DPmm); 			
-
-
-				//OTHER THINGS SKUPINSKA HITROST SEŠTETI ŽAREK
-				// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+				
-				var pozY3=pozY1+22;
-				
-				var deltaomegasp=omega2-omega1;
-				var deltaksp=ksp2-ksp1;
-
-				var deltaomegazg=omega2-omega1;
-				var deltakzg=kzg2-kzg1;				
-				
-				// ČE je nan, potem je skupinska hitrost enaka fazni
-				if (isNaN(parseFloat("group_speed_top"))) {
-					group_speed_top=c0zg1;					// The zero divided by zero, this means that it's the same signal summed twice
-				}
-				
-				if (isNaN(parseFloat("group_speed_bot"))) {
-					group_speed_bot=c0sp1;					// The zero divided by zero, this means that it's the same signal summed twice
-				}
-				
-				var group_speed_top=deltaomegazg/deltakzg;			
-				var group_speed_bot=deltaomegasp/deltaksp;
-				var c0toGroupSpeedBot=Math.round(group_speed_bot/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
-				var c0toGroupSpeedTop=Math.round(group_speed_top/c0*1000000)/1000000;				// HOw fast is group speed compared to speed of light in vacum
-
-
-				ctx1.beginPath();
-				ctx1.fillStyle = "red";
-				fillTextkaro("SEŠTETI ŽAREK:",pozX1+2,pozY3,ctx1,DPmm); 
-				ctx1.stroke();	
-				ctx1.beginPath();
-				ctx1.fillStyle = "#303030";
-				
-				
-				fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY3+2,ctx1,DPmm); 			
-				fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY3+3,ctx1,DPmm); 
-
-				fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY3+2,ctx1,DPmm); 			
-				fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY3+3,ctx1,DPmm); 
-				
-
-				fillTextkaro(messageGroupVelocity,pozX1+10,pozY3,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u21D1]= "+group_speed_top.toFixed(9)+" μm/fs = "+c0toGroupSpeedTop.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+6,ctx1,DPmm); 			
-				fillTextkaro("Δω/Δk[\u2B07]= "+group_speed_bot.toFixed(9)+" μm/fs = "+c0toGroupSpeedBot.toFixed(3)+"\u00B7c0",pozX1+9,pozY3+7		,ctx1,DPmm); 
 			
-
-
-
-
-				ctx1.stroke();	
-			}
-
-		
 };
 
-function getDispersiveN(n,fTHz,material) {
-	//return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
-	//return (n+Math.pow(fTHz/370,30));					// n is linearly related to f
-	//return (n+Math.pow(fTHz/100*n,dispersivity/2))
-	var L=calculate_wavelenght(fTHz,1);
-	var Lsq=Math.pow(L,2);
-	
-	if (material=="sio2") {
-		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
-		var A=0.6961663;
-		var B=0.0684043;
-		var C=0.4079426;
-		var D=0.1162414;
-		var E=0.8974794;
-		var F=9.896161;
-		
-		var Asq=Math.pow(A,2);
-		var Bsq=Math.pow(B,2);
-		var Csq=Math.pow(C,2);
-		var Dsq=Math.pow(D,2);
-		var Esq=Math.pow(E,2);
-		var Fsq=Math.pow(F,2);
-
-		var n = 1 + (  (A*Lsq) / ( Lsq - Bsq )  ) + (  (C*Lsq)/( Lsq - Dsq )  ) + (  (E*Lsq)/( Lsq - Fsq )  );
-		var n = Math.sqrt(n);
-
-	} else if (material=="Yb2O3") {
-		// for SiO2 at Temperature 20°C:
-		var A=2.647;
-		var B=0.01800;
-		
-		var n = 1 + ( A * Lsq ) / ( Lsq - B );
-		var n = Math.sqrt(n);
-		
-	} else if (material=="TiO2") {
-		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
-		var A=5.913;
-		var B=0.2441;
-		var C=0.0803;
-	
-		var n = (A) + ( (  B  )/(  Lsq - C  ) )
-		var n = Math.sqrt(n);
-		
-	} else if (material=="vakum") {
-		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
-		var n = 1;
-	}
-
-
-	return n;
-}
-
-function calculateReflectance(n1,n2,thetaRad,pol_choice) {
-		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
-		// This is for E field on s plane, for power it has to be.. squared
-		// IT depends on polarization on the incoming wave
-				// Sneels Law
-
-		var thetaRefr=Math.asin(Math.sin(thetaRad)*n1/n2);								// ANGLE OF REFLECTED RAY
-		
-		if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
-			var RpTOP=n1*Math.cos(thetaRefr) - n2*Math.cos(thetaRad);
-			var RpBOT=n1*Math.cos(thetaRefr) + n2*Math.cos(thetaRad);
-			var Rp=Math.pow(RpTOP/RpBOT,2);
-			var R=Rp;
-			var T=1-Rp;	
-			
-		} else if (pol_choice==1) {
-			var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(thetaRefr);
-			var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(thetaRefr);
-			var Rs=Math.pow(RsTOP/RsBOT,2);										
-			var R=Rs;
-			var T=1-Rs;												// E field amplitude reduced by?		
-		} else {
-			alert("I dun goffed! Something wrong with the choice of polarisation in the code");
-		}
-	
-	return T;
-}
-
+// THIS ONE CALCULATES HOW TO DRAW REFLECTIVE; REFRACTIVE AND INPENDING WAVE
 function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 //--- WAVES---
-
-
-	// DOES THE USER WANT TO CHANGLE The lenght of refracted wave?	
-	// Check if DIV ELEMENT EXISTS; IF NOT; JUST USE DEFAULT
-	if (document.getElementById("range_refracted_raylenght") === null) {  // IF IT IS DEFINED?
-		var refracted_raylenght=raylength;
-	} else { 
-		var refracted_raylenght=document.getElementById("range_refracted_raylenght").value;
-		document.getElementById("value_refracted_raylenght").innerHTML=refracted_raylenght
-
-	}
 	
-
+	// Let user define refracted raylength
+		// Check if DIV ELEMENT EXISTS; IF NOT; JUST USE DEFAULT
+		if (document.getElementById("range_refracted_raylenght") === null) {  						// IF IT IS DEFINED?
+			var refracted_raylenght=raylength;
+		} else { 
+			var refracted_raylenght=document.getElementById("range_refracted_raylenght").value;
+			document.getElementById("value_refracted_raylenght").innerHTML=refracted_raylenght
+		}
+	
+	
 	// INCOMING WAVE
-		// GET WAVE LENGTH
-
 		
 		// GET THETA ANGLE FROM USER					
-		theta1=document.getElementById("theta1").value/10;
-		document.getElementById("value_theta1").innerHTML=theta1*10;
-		var thetaRad=Math.PI/180*(theta1);								// Theta in radians
-		var tilt=90-theta1;												// Angle from horizontal line... because Javascript
+			theta1=document.getElementById("theta1").value/10;
+			document.getElementById("value_theta1").innerHTML=theta1;
+			var thetaRad=Math.PI/180*(theta1);														// Theta in radians
+			var tilt=90-theta1;																		// Angle from horizontal line... because Javascript
+	
 		
+		// Starting point of the incoing way is ray_length away from the central point
+			var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
+			var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 		
-	// Starting point of the incoing way is ray_length away from the central point
-		var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
-		var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
-		
-	var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
+		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
 
 
-	//!!!!!!!!!!!!!!!!!
+	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// REFRACTED WAVE
 		//  Strating point of refracted wave is the ending point of incoming wave
 			var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
@@ -859,199 +731,175 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
 		// This is for E field on s plane, for power it has to be.. squared
 		// IT depends on polarization on the incoming wave
-		var pol_choice=document.getElementById("range_polarisation").value;
-		if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
-			var RpTOP=Math.abs(n1)*Math.cos(theta2rad) - Math.abs(n2)*Math.cos(thetaRad);
-			var RpBOT=Math.abs(n1)*Math.cos(theta2rad) + Math.abs(n2)*Math.cos(thetaRad);
-			var Rp=Math.pow(RpTOP/RpBOT,2);
-			var R=Rp;
-			var T=1-Rp;	
-			
-		} else if (pol_choice==1) {
-			var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(theta2rad);
-			var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(theta2rad);
-			var Rs=Math.pow(RsTOP/RsBOT,2);										
-			var R=Rs;
-			var T=1-Rs;												// E field amplitude reduced by?		
-		} else {
-			alert("I dun goffed! Something wrong with the choice of polarisation in the code");
-		}
+			var pol_choice=document.getElementById("range_polarisation").value;
+			if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
+				var RpTOP=Math.abs(n1)*Math.cos(theta2rad) - Math.abs(n2)*Math.cos(thetaRad);
+				var RpBOT=Math.abs(n1)*Math.cos(theta2rad) + Math.abs(n2)*Math.cos(thetaRad);
+				var Rp=Math.pow(RpTOP/RpBOT,2);
+				var R=Rp;
+				var T=1-Rp;	
+				
+			} else if (pol_choice==1) {
+				var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(theta2rad);
+				var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(theta2rad);
+				var Rs=Math.pow(RsTOP/RsBOT,2);										
+				var R=Rs;
+				var T=1-Rs;																// E field amplitude reduced by?		
+			} else {
+				alert("I dun goffed! Something wrong with the choice of polarisation in the code");
+			}
 
-		
 		// Calculating the phase of ray 2 - bacause our refracted wave is simulated as a new ray and I have to know at what phase the ray 1 ends
 			var wave1_wavelength=calculate_wavelenght(fTHz,n1);
 			var wave2_phase=calculate_border_phase(raylength,wave1_wavelength);
 		
-		// IF TOTAL REFLECTION OCCURS - Ignore fresnell equations completelly
+		// IF TOTAL REFLECTION OCCURS - Ignore fresnell equations completelly; becquse infinitw
 			if (isNaN(theta2rad)) {	
 				var R=1;			
 			} 
 			
-		// Power to E-field
+		// Power rqtio to to E-field ratio.. I think i got this right
 			var Re=Math.sqrt(R);
 			var Te=Math.sqrt(T);
 	
 		// delay of ray2 because waiting on ray1.. depends only on the speed of light. so t=c/distance
-		var tdelay=calculateTravelTime(raylength,n1);
+			var tdelay=calculateTravelTime(raylength,n1);
 		
-		// DRAW RAY 2 ---------------
+		// ---------------DRAW REFRACTED RAY, RAY 2 ---------------
 		var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay);
 
 
 
-	//!!!!!!!!!!!!!!!!!
+	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	//  REFLECTED WAVE - only if enabled
-	if (document.getElementById("showReflecterRay").checked==1) {
-		var theta3rad = thetaRad-Math.PI/2;
-		var tilt3=theta3rad*180/Math.PI;
-		
-		//drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0);
-		
-		
+		if (document.getElementById("showReflecterRay").checked==1) {
+			var theta3rad = thetaRad-Math.PI/2;
+			var tilt3=theta3rad*180/Math.PI;			
 
-		// IF WE ARE AT P PLANE POLARIZATION AND THETA = AT BREWSTERS ANGLE; DON?T SHOW A WAVE:::(remove straight line)
-		if (document.getElementById("range_polarisation").value==0 && theta1 == findBresterAngle(n1,n2)) {
-			var arrayReflected=new Array();			// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
-		} else  {
-			var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
-
+			// IF WE ARE AT P PLANE POLARIZATION AND THETA = AT BREWSTERS ANGLE; DON?T SHOW A WAVE:::(remove straight line)
+			if (document.getElementById("range_polarisation").value==0 && theta1 == findBresterAngle(n1,n2)) {
+				var arrayReflected=new Array();			// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
+			} else  {
+				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave2_phase,n1,tdelay);
+			}
+			
+		} else {		// return empty array if.. user donesn't want it shown
+			var arrayReflected=new Array();  // Empty array
 		}
 		
-	} else {
-		var arrayReflected=new Array();  // Empty array
-	}
+	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
-
-
-
-		// return top and bottom rays
+		// return top and bottom rays - so they can be summed together and also used on third canvas
 		return [arrayTopRay,arrayBottomRay,arrayReflected];
-
 }
 
 // FUNCTION THAT ACTUALLYD DRAWS THE WAVES
 function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay) {
 
 	// Defined
-	var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
-	var c0mmpatts=299792458/Math.pow(10,12)					// micro - nano - piko - femto - atto .. 12 zeroes. micrometers/attoseconds (Should be a number around 50 for 10 micrometers)
-	var array_wave=new Array();
-			
+		var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
+		var c0mmpatts=299792458/Math.pow(10,12)					// micro - nano - piko - femto - atto .. 12 zeroes. micrometers/attoseconds (Should be a number around 50 for 10 micrometers)
+		var array_wave=new Array();
+				
 	// Rotatino around which point?		
-	var rotatex = xStart;									// By default the rotation is around the starting point of the wave
-	var rotatey = yStart;		
+		var rotatex = xStart;									// By default the rotation is around the starting point of the wave
+		var rotatey = yStart;		
 				
 	// Pulled 		
-	var fTHz;												// f in TeraHerz 10^12
-	var raylength;											// length of wave in micrometers in the direction of movement for presentation purposes)
-	var Amp;												// Wave Amplitude - has no meaning, just to make it nice on the canvas
+		var fTHz;												// f in TeraHerz 10^12
+		var raylength;											// length of wave in micrometers in the direction of movement for presentation purposes)
+		var Amp;												// Wave Amplitude - has no meaning, just to make it nice on the canvas
+				
+	// Calculated - floating point, we got weird ass number in here!!
+		var raytime = raylength*n/c0mmpatts;					// time for wave to travel the defined length
+		var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
+		var numPeriodsToDraw=raylength/lambda1;					// depends on the length of the distance traveled
+		var w11=2*Math.PI*fTHz/Math.pow(10,6);					// Angular speed in rad/attoseconds		
+		var k1 = 2*Math.PI/lambda1;								// Wavenumber in 1/micrometers
 			
-	// Calculated		
-	var raytime = raylength*n/c0mmpatts;					// time for wave to travel the defined length
-	var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
-	var numPeriodsToDraw=raylength/lambda1;					// depends on the length of the distance traveled
-	var w11=2*Math.PI*fTHz/Math.pow(10,6);					// Angular speed in rad/attoseconds		
-			
-	// START DRAWING WHERE?
-	ctx1.moveTo(xStart,yStart);	
+	
+	
+
 
 	// ROTATE DRAWN IMAGE AROUND WHICH POINT (for the angle - theta of wave)
 	// Basically this thing draws wave in x diretin then rotates it to avoid cartezian converions.
-	ctx1.translate(rotatex,rotatey);		
-	ctx1.rotate(tilt * Math.PI / 180);
-	ctx1.translate(-rotatex,-rotatey);
+		ctx1.translate(rotatex,rotatey);		
+		ctx1.rotate(tilt * Math.PI / 180);
+		ctx1.translate(-rotatex,-rotatey);
 	
-	// Calculated
-	//var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
-	var k1 = 2*Math.PI/lambda1;								// Wavenumber in 1/micrometers
-	
-	
-	// THIS SIMULATES WAVE IS APPROACHING TO THE SUFACE.
-	if (t<=raytime+tdelay)	{
-		var how_many_samples=(t-tdelay)*sampling*c0mmpatts/n			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
-	} else {
-		var how_many_samples=sampling*raylength;			// if 12 micrometers, then 12*sampling
-	}
+	// THIS SIMULATES WAVE IS APPROACHING TO THE SUFACE.  I have defeated the infinite signal (pretend it does not exist)!!
+		if (t<=raytime+tdelay)	{
+			var how_many_samples=(t-tdelay)*sampling*c0mmpatts/n			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
+		} else {
+			var how_many_samples=sampling*raylength;						// if 12 micrometers, then 12*sampling
+		}
 	
 	// STARTING TO PUT PREPARE DOTS FOR CANVAS
-	ctx1.beginPath();
-	ctx1.moveTo(xStart,yStart);	
+		ctx1.beginPath();
+		ctx1.moveTo(xStart,yStart);	
+		
+	// THE LIE THAT IS THE WAVE NATURE OF LIGHT
 	
-	for (var i=0;i<=how_many_samples;++i) {
-
-		// SAMPLING SIZE - this represent the wave from 
-		var x=i*1/sampling;							
-		var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
-		
-
-
-		// -- MAIN FUNCTION
-		//--------------------  													//The eqation represents a signal which is infinteley long, has allways and will exist. When presenting this on canvas
-		var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);									// i am movinb both with time as well as with direction, since I am seeing the wave moving. 
-		//var f1 = wave_equation(Amp,k1,x,w11,t,phaseShift);						// The infinite ray is drawn an frozen every delat_t. How much did the wave move at this deltat? c=dl/dt --> dtl=c*dt
-		// Save the wave_form?
-		array_wave[i]=f1;
-		//--------------------
-		
-		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX THIS HAD TO BE DONE, because I can't stop line...
-
-		if(document.getElementById("markPoins").checked == '1'){	
-			putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-		} else if(document.getElementById("markFronts").checked == '1'){	
-			putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
-		} else if(document.getElementById("markFields").checked == '1'){
-			ctx1.globalAlpha = 0.5;		
-			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-		} else if (document.getElementById("markLines").checked == '1'){
-			// Only every sampling/kth sample.		// MAYE
-			if ( (Math.floor(i-5*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
-				putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);			
+		for (var i=0;i<=how_many_samples;++i) {								// need variable sample size to simulate wave comming in
+			// SAMPLING SIZE - this represent the wave from 			
+			var x=i*1/sampling;										
+			var mmppx=x*DPmm												// StretchFactor (How many pixels represents a micrometer of a wavelenght
+						
+			
+			
+			// -- MAIN FUNCTION			
+			//--------------------  										//The eqation represents a signal which is infinteley long, has allways and will exist. When presenting this on canvas
+			var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);						// i am movinb both with time as well as with direction, since I am seeing the wave moving. 
+																			// The infinite ray is drawn an frozen every delat_t. How much did the wave move at this deltat? c=dl/dt --> dtl=c*dt
+			
+			// Save the wave to make the summed wave (muy importante!)
+				array_wave[i]=f1;
+			//--------------------
+			// -- END OF MAIN FUNCTION
+			
+			
+			
+			// HOW TO DISPLAY RESULTS - SNAKES; OR FRONTS or DOTS?
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
+			
+			if(document.getElementById("markPoins").checked == '1'){	
+					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			} else if(document.getElementById("makrCurves").checked == '1'){	
+					putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
+			} else if(document.getElementById("markFields").checked == '1'){
+					ctx1.globalAlpha = 0.5;		
+					putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			} else if (document.getElementById("markFronts").checked == '1'){
+					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				
+				// GHOSTS - failed attempt at just knowing where the fronts will be but ended up eating my CPU. So easier to "re-sample" my construced signal.
+				// NOT DOING THIS ANYMORE; THIS IS A NIGHTMARE. TLets use flage and global variabls instead
+				// Only every sampling/kth sample.		// MAYE
+				//	if ( (Math.floor(i-sampling/10*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
+				//		putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				//	}
+				//document.getElementById("test2").innerHTML=how_many_samples
+				//document.getElementById("test3").innerHTML=Math.floor(i-5*t/fTHz)
+				//document.getElementById("test3").innerHTML=Math.floor(sampling*lambda1);
 			}
-			//document.getElementById("test2").innerHTML=how_many_samples
-			//document.getElementById("test3").innerHTML=Math.floor(i-5*t/fTHz)
-			//document.getElementById("test3").innerHTML=Math.floor(sampling*lambda1);
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		}
-		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		// Returns the whole wave it just made
-	}
 	
 	// STROKING THOSE DOTS!! - this is how canvas works.. easier on machine to prepare dots and stroke themm at once.
 	ctx1.stroke();
-	ctx1.globalAlpha = 1;			
+		ctx1.globalAlpha = 1;																			// Transparence - in cease some mumbo jumo happened in there
 
 
 	// Rotate K.O. back
-	ctx1.translate(rotatex,rotatey);
-	ctx1.rotate(-tilt * Math.PI / 180);
-	ctx1.translate(-rotatex,-rotatey);	
-	
+		ctx1.translate(rotatex,rotatey);
+		ctx1.rotate(-tilt * Math.PI / 180);
+		ctx1.translate(-rotatex,-rotatey);	
+		
 	// Return the array if you want it.
-	return array_wave;
+		return array_wave;
 }
 
-// Calculates f(x) like a million times
-function wave_equation(Amp,k1,x,w11,t,phaseShift) {
-	return Amp*Math.sin(k1*x-w11*t+phaseShift);
-}
-
-function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx) {
-	ctx.beginPath();
-    ctx.strokeStyle = '#909090';
-	ctx.setLineDash([1, 3]);/*dashes are 5px and spaces are 3px*/
-	ctx.beginPath();
-	  
-	for (var i=0;i<=blocks_horizontal;i++) {
-	  ctx.moveTo(block_startX,block_startY+i*block_width);
-	  ctx.lineTo(block_startX+block_width*blocks_vertical,block_startY+i*block_width);
-	  ctx.stroke();
-	}
-
-	for (var i=0;i<=blocks_vertical;i++) {
-	  ctx.moveTo(block_startX+i*block_width,block_startY);
-	  ctx.lineTo(block_startX+i*block_width,block_startY+block_width*blocks_horizontal);
-	  ctx.stroke();
-	}
-}
+// THEESE THREE ARE CALLED BY DRAWEAY
 function putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
 	ctx1.strokeStyle = 'purple';		
 	ctx1.lineWidth=pixelSize;
@@ -1065,7 +913,31 @@ function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 
 function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
 	ctx1.fillStyle = 'purple';
-	ctx1.fillRect(xStart+mmppx,yStart, 2, 50);			// Makes dotss
+	
+	// Detect peak with +90%
+	
+	// Trying to detect if smaller than 0, but javascript faster with == than with >
+	if (Math.sign(parseInt(f1))==1 && flag_front==1){	
+	ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
+	flag_front=0;
+		}
+		
+	// Trying to detect if smaller than 0, but javascript faster with == than with >
+	if (Math.sign(parseInt(f1))==-1 && flag_front==0) {
+		ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
+		flag_front=1;
+		}
+		
+	// If detected on up, draw line, set global flag flag to zero
+//	if (beep>0.9 && flag==1) {
+//	ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
+//	flag_front=0;		// don't draw until flag = 1
+//	} else if (beep<-9) {
+//	flag_front=1;
+//	}
+	
+	
+	
 }
 
 function putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
@@ -1115,93 +987,213 @@ function putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 
 }
 
-function sumArrays(array1,array2) {				// Sets the same size for arrays then adds them togehter
-	// make arrays size equal, prevent NaNs
-	var size_diff=array2.length-array1.length;
+
+
+// Places  text relative to the math square
+function fillTextkaro(tekst,kvadratek_x,kvadratek_y,ctx,DPmm) {
+	ctx.fillText(tekst, DPmm+(kvadratek_x-1)*DPmm/2+DPmm/20,DPmm+(kvadratek_y)*DPmm/2-DPmm/10);
+}
+
+// DESCRIPTION OF REAL MATERIALS - GLASS,...
+function getDispersiveN(n,fTHz,material) {		
+	//return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
+	//return (n+Math.pow(fTHz/370,30));							// n is linearly related to f
+	//return (n+Math.pow(fTHz/100*n,dispersivity/2))
+
+	var L=calculate_wavelenght(fTHz,1);
+	var Lsq=Math.pow(L,2);
 	
-	for (var i=0;i<Math.abs(size_diff);i++) { 
-		if (size_diff>0) {
-			array1.push(0);
-		} else if (size_diff<0){
-			array2.push(0);
-		}
+	if (material=="sio2") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
+		var A=0.6961663;
+		var B=0.0684043;
+		var C=0.4079426;
+		var D=0.1162414;
+		var E=0.8974794;
+		var F=9.896161;
+		
+		var Asq=Math.pow(A,2);
+		var Bsq=Math.pow(B,2);
+		var Csq=Math.pow(C,2);
+		var Dsq=Math.pow(D,2);
+		var Esq=Math.pow(E,2);
+		var Fsq=Math.pow(F,2);
+
+		var n = 1 + (  (A*Lsq) / ( Lsq - Bsq )  ) + (  (C*Lsq)/( Lsq - Dsq )  ) + (  (E*Lsq)/( Lsq - Fsq )  );
+		var n = Math.sqrt(n);
+
+	} else if (material=="Yb2O3") {
+		// for SiO2 at Temperature 20°C:
+		var A=2.647;
+		var B=0.01800;
+		
+		var n = 1 + ( A * Lsq ) / ( Lsq - B );
+		var n = Math.sqrt(n);
+		
+	} else if (material=="TiO2") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
+		var A=5.913;
+		var B=0.2441;
+		var C=0.0803;
+	
+		var n = (A) + ( (  B  )/(  Lsq - C  ) )
+		var n = Math.sqrt(n);
+		
+	} else if (material=="vakum") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
+		var n = 1;
 	}
+
+
+	return n;
+}
+
+// REFLECTANCE based on polarization
+function calculateReflectance(n1,n2,thetaRad,pol_choice) {
+		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
+		// This is for E field on s plane, for power it has to be.. squared
+		// IT depends on polarization on the incoming wave
+		// Sneels Law
+
+		var thetaRefr=Math.asin(Math.sin(thetaRad)*n1/n2);								// ANGLE OF REFLECTED RAY
+		
+		// S PLANE or P I am not sure
+		if (pol_choice==0) {															// This is for E field on p plane, for power it has to be.. squared
+			var RpTOP=n1*Math.cos(thetaRefr) - n2*Math.cos(thetaRad);
+			var RpBOT=n1*Math.cos(thetaRefr) + n2*Math.cos(thetaRad);
+			var Rp=Math.pow(RpTOP/RpBOT,2);
+			var R=Rp;
+			var T=1-Rp;	
+			
+		} else if (pol_choice==1) {
+			var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(thetaRefr);
+			var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(thetaRefr);
+			var Rs=Math.pow(RsTOP/RsBOT,2);										
+			var R=Rs;
+			var T=1-Rs;																	// E field amplitude reduced by?		
+		} else {
+			alert("I dun goffed! Something wrong with the choice of polarisation in the code");
+		}
+	return T;
+}
+
+// MAKES THE BORDER OF MATERIALS
+function drawCrossBorder(x,y,ctx2,DPmm) {
+	var width=5.5
+	ctx2.rect(x-DPmm*width/2, y , DPmm*width, 2);		// Horizontal Line
+	ctx2.rect(x, y-DPmm*3, 2, DPmm*6);				// Vertical line
+}
+
+// MAKES MATH PAPER
+function drawMathPaper(block_startX,block_startY,blocks_vertical,blocks_horizontal,block_width,ctx) {
+	ctx.beginPath();
+    ctx.strokeStyle = '#909090';
+	ctx.setLineDash([1, 3]);/*dashes are 5px and spaces are 3px*/
+	ctx.beginPath();
+	  
+	for (var i=0;i<=blocks_horizontal;i++) {
+	  ctx.moveTo(block_startX,block_startY+i*block_width);
+	  ctx.lineTo(block_startX+block_width*blocks_vertical,block_startY+i*block_width);
+	  ctx.stroke();
+	}
+
+	for (var i=0;i<=blocks_vertical;i++) {
+	  ctx.moveTo(block_startX+i*block_width,block_startY);
+	  ctx.lineTo(block_startX+i*block_width,block_startY+block_width*blocks_horizontal);
+	  ctx.stroke();
+	}
+}
+
+
+// SUMS 2 ARRAY TOGETHER
+function sumArrays(array1,array2) {								// Sets the same size for arrays then adds them togehter
+	// make arrays size equal, prevent NaNs
+		var size_diff=array2.length-array1.length;
+		
+		for (var i=0;i<Math.abs(size_diff);i++) { 
+			if (size_diff>0) {
+				array1.push(0);
+			} else if (size_diff<0){
+				array2.push(0);
+			}
+		}
 	
 	// SUM both arrays together... thank you https://stackoverflow.com/questions/5760058/how-to-return-multiple-arrays-from-a-function-in-javascript
-	var waveRefSum = array1.map(function (num, idx) {
-		return num + array2[idx];
-	});	
-	
+		var waveRefSum = array1.map(function (num, idx) {
+			return num + array2[idx];
+		});	
+		
 	return waveRefSum;
 }
 
-// DRAW SUMMED WAVE FROM ARRAYS
+// DRAW SUMMED ARRAYS
 function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
 //--- WAVES---
-	// Get arrays:
-	var wave1incoming=arrays1[0];
-	var wave1refracted=arrays1[1];
-	var wave1reflected=arrays1[2];
+	// Get arrays: - 6 of them
+		var wave1incoming=arrays1[0];
+		var wave1refracted=arrays1[1];
+		var wave1reflected=arrays1[2];
 
-	var wave2incoming=arrays2[0];
-	var wave2refracted=arrays2[1];
-	var wave2reflected=arrays2[2];
+		var wave2incoming=arrays2[0];
+		var wave2refracted=arrays2[1];
+		var wave2reflected=arrays2[2];
 		
 	// GET THETA ANGLE FROM USER					
-	var theta1=document.getElementById("theta1").value/10;
-	document.getElementById("value_theta1").innerHTML=theta1*10;
+		var theta1=document.getElementById("theta1").value/10;
+		document.getElementById("value_theta1").innerHTML=theta1;
 	
-	var thetaRad=Math.PI/180*(theta1);								// Theta in radians
-	var tilt=90-theta1;												// Angle from horizontal line... because Javascript
+	var thetaRad=Math.PI/180*(theta1);						// Theta in radians
+	var tilt=90-theta1;										// Angle from horizontal line... because Javascript
 
-	//!!!!!!!!!!!!!!!!!		
+	//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
 	// INCOMING WAVE - incoming waves are always at the same angle
 		// SUM UP 2 arrays -- thank you https://stackoverflow.com/questions/5760058/how-to-return-multiple-arrays-from-a-function-in-javascript
-		var waveIncSum=sumArrays(wave1incoming,wave2incoming);
+			var waveIncSum=sumArrays(wave1incoming,wave2incoming);
 
 		// Starting point of the incoing wave is ray_length away from the central point
-		var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
-		var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
+			var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
+			var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 				
-
 	drawRayfromArray(raylength,xStart,yStart,tilt,waveIncSum,ctx1);
 	
 	
-	//!!!!!!!!!!!!!!!!!
+	//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
 	// REFRACTED WAVE - refracted rays ae not always at the same angle!
 		// SUM UP 2 ARRAYS - only if the angle is the same for both .. eg  if the medium is not dispersive!
 	
 	//  Strating point of refracted and reflected wave is the ending point of incoming wave
-	var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
-	var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
+		var xEndWave1 = xStart+raylength*DPmm*Math.cos(tilt*Math.PI/180);
+		var yEndWave1 = yStart+raylength*DPmm*Math.sin(tilt*Math.PI/180);
 
 	// angle of refraction for frist ray
-	var theta2radWAVE1=Math.asin(Math.sin(thetaRad)*n1ray1/n2ray1);	
-	var tilt2_1=90-theta2radWAVE1*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
+		var theta2radWAVE1=Math.asin(Math.sin(thetaRad)*n1ray1/n2ray1);	
+		var tilt2_1=90-theta2radWAVE1*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
 
-	var theta2radWAVE2=Math.asin(Math.sin(thetaRad)*n1ray2/n2ray2);	
-	var tilt2_2=90-theta2radWAVE2*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
+		var theta2radWAVE2=Math.asin(Math.sin(thetaRad)*n1ray2/n2ray2);	
+		var tilt2_2=90-theta2radWAVE2*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
 
 		// SHOW SUMMED RAY ONLY IF THEY ARE IN THE SAME DIRECTION
 		if (theta2radWAVE1==theta2radWAVE2) {
 			theta2rad=theta2radWAVE1;
 		
-			// ADD waves together
-			// make arrays size equal, preventNaNs
-			var waveRefSum=sumArrays(wave1refracted,wave2refracted);
+			// ADD waves together and make  arrays size equal, preventNaNs
+				var waveRefSum=sumArrays(wave1refracted,wave2refracted);
+				
+			// DRAW THE NEW WAVE
 			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum,ctx1)
-		} else {	// SHOW BOTH RAYS
-		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted,ctx1)
-		drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted,ctx1)				
+			
+		} else {																		// SHOW BOTH RAYS  - if their angle is different
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted,ctx1)
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted,ctx1)				
 		}
 		
 		
-	//!!!!!!!!!!!!!!!!!
+	//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+	
 	// REFLECTED WAVE
-		// Disable by choice
+		// Disabled by choice? Mah, let compute sweat
 		
 		// SUM UP 2 arrays -- thank you https://stackoverflow.com/questions/5760058/how-to-return-multiple-arrays-from-a-function-in-javascript
-		var waveReflSum=sumArrays(wave1reflected,wave2reflected);
+			var waveReflSum=sumArrays(wave1reflected,wave2reflected);
 
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;			
@@ -1213,65 +1205,69 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
 // DRAW RAY FROM ARRAY - for the summed wave
 function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 	// Rotating around which point?		
-	var rotatex = xStart;									// By default the rotation is around the starting point of the wave
+	var rotatex = xStart;												// By default the rotation is around the starting point of the wave
 	var rotatey = yStart;		
 				
 	// Pulled 	
 	// START DRAWING WHERE?
-	ctx1.moveTo(xStart,yStart);	
+		ctx1.moveTo(xStart,yStart);	
 
 	// ROTATE DRAWN IMAGE AROUND WHICH POINT (for the angle - theta of wave)
-	ctx1.translate(rotatex,rotatey);		
-	ctx1.rotate(tilt * Math.PI / 180);
-	ctx1.translate(-rotatex,-rotatey);
-	
-	
-	if(document.getElementById("markFronts").checked == '1'){	// LINE IS STROKEN ONLY ONCE
-		ctx1.beginPath();
-		moveTo(xStart,yStart);
-		};		
+		ctx1.translate(rotatex,rotatey);		
+		ctx1.rotate(tilt * Math.PI / 180);
+		ctx1.translate(-rotatex,-rotatey);
+		
+
+// FLAG FOR DELETION
+//	if(document.getElementById("makrCurves").checked == '1'){			// LINE IS STROKEN ONLY ONCE
+//		ctx1.beginPath();
+///		moveTo(xStart,yStart);
+//		};		
 
 		
 	ctx1.beginPath();
 	ctx1.moveTo(xStart,yStart);
-	for (var i=0;i<=array_wave.length;++i) {
+	
+		for (var i=0;i<=array_wave.length;++i) {
 
-		var x=i*1/sampling;							
-		var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
-		var f1=array_wave[i]
-		
-		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			var x=i*1/sampling;							
+			var mmppx=x*DPmm									// StretchFactor (How many pixels represents a micrometer of a wavelenght
+			var f1=array_wave[i]
+			
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-		if(document.getElementById("markPoins").checked == '1'){	
-			putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-		} else if(document.getElementById("markFronts").checked == '1'){	
-			putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-		} else if(document.getElementById("markFields").checked == '1'){
-			ctx1.globalAlpha = 0.5;		
-			putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			if(document.getElementById("markPoins").checked == '1'){	
+				putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			} else if(document.getElementById("makrCurves").checked == '1'){	
+				putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			} else if(document.getElementById("markFields").checked == '1'){
+				ctx1.globalAlpha = 0.5;		
+				putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+			}
+			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		}
-		//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	}
 	ctx1.stroke();
 	ctx1.globalAlpha = 1;			
 
-
-	
 	// Rotate K.O. back
-	ctx1.translate(rotatex,rotatey);
-	ctx1.rotate(-tilt * Math.PI / 180);
-	ctx1.translate(-rotatex,-rotatey);	
+		ctx1.translate(rotatex,rotatey);
+		ctx1.rotate(-tilt * Math.PI / 180);
+		ctx1.translate(-rotatex,-rotatey);	
 	
-	// Return the array if you want it.
+	// Return the array if you want it....nah
 }
 
+// GET WAVELENGHT IN micrometerf from TeraHerz
 function calculate_wavelenght(fTHz,n) {						// Takes n and f in Thz
-	var c0mmpms=299792458									// kilometers per second == milimeters per microseconds
-	var lambda_micrometers=c0mmpms/(n*fTHz*1000000);			// in micrometers,,,Freakin floating poit weirdness
+	var c0mmpms=299792458;									// kilometers per second == milimeters per microseconds
+	var lambda_micrometers=c0mmpms/(n*fTHz*1000000);		// in micrometers,,,Freakin floating poit weirdness
 	return lambda_micrometers;
 }
 
+// Calculater border phase - so the refracted wave can be simulated as continuing
 function calculate_border_phase(distance_travelled,lambda) {	
+
+	// This took forever...
 
 	// What is the wavelenght of the wave?					2.0 um
 	// lambda
@@ -1294,8 +1290,9 @@ function calculate_border_phase(distance_travelled,lambda) {
 	return phase;
 }
 
+// PAUSES TIME AND takes care of the stopwatch as well
 function pause_time() {
-	if (document.getElementById("button_pause").value==0) {		// When clicking UNPAUSE TIME
+	if (document.getElementById("button_pause").value==0) {						// When clicking UNPAUSE TIME
 		document.getElementById("button_pause").innerHTML="STOP"
 		stopwatch1=t;															// Remember wheny ou clicked pause for the stopwatch
 		document.getElementById("button_pause").value=1;						
@@ -1307,50 +1304,50 @@ function pause_time() {
 	}
 }
 
+// RESET TIME to 0
 function reset_time() {
 	t=0;
 	stopwatch1=0;
 }
 
-function THZ2aas (fTHz) {  // Terahertz to atoseconds
-	return 1/fTHz*1000000;
-}
-
+// Time needed to in.. attoseconds? or femtoseconds?
 function calculateTravelTime(distanceInMicrometers,n) {
 	var c0mmpus=299792458/n;							// meters per second = micrometers per microsecond
 	var timeinatts=distanceInMicrometers/(c0mmpus);		// delay in microseconds
 	return timeinatts*Math.pow(10,12);					// delay in attoseconds
 }
 
-
+// CRITICAL ANGLE FIND 
 function findCriticalAngle(n1,n2) {
+
 	// get n2 and n2..from global if arguments weren't passed -- button in html needs this.
-	if (n1 === undefined) {
-		var n1=n1ray1;
-		var n2=n2ray1;
-	} 
+		if (n1 === undefined) {
+			var n1=n1ray1;
+			var n2=n2ray1;
+		} 
 	
-	// get n2 and n2
-	var criticalAngle=Math.asin(n2/n1);
+	// calcualte
+		var criticalAngle=Math.asin(n2/n1);
 	
 		// If not possible to calculate
 		if (isNaN(criticalAngle)) {	
 			//alert("No Critical Agnle exists");
 		} 
-	var criticalAngleDeg=Math.ceil((criticalAngle*180/Math.PI)*10)/10;
+		
+	var criticalAngleDeg=Math.ceil((criticalAngle*180/Math.PI)*10)/10;							// Make it understood
 	return criticalAngleDeg;
 }
 
+// Puts the simulatuin in the angle of Critical Angle
 function setCriticalAngle() {
 
 	var criticalAngleDeg=findCriticalAngle();
 	
-	
 	if (isNaN(criticalAngleDeg)) {	
 		return;
 	} else {
-	document.getElementById("message_noCriticalAngle").innerHTML="";
-	document.getElementById("theta1").value=criticalAngleDeg*10	
+		document.getElementById("message_noCriticalAngle").innerHTML="";
+		document.getElementById("theta1").value=criticalAngleDeg*10	
 	}	
 	
 
@@ -1358,54 +1355,54 @@ function setCriticalAngle() {
 	// Calculate total reflectino angle
 }
 
+// FIND BREWSTER ANGLE
 function findBresterAngle(n1,n2) {
 	// get n2 and n2..from global
 	if (n1 === undefined) {
-	var n1=n1ray1;
-	var n2=n2ray1;
+		var n1=n1ray1;
+		var n2=n2ray1;
 	} 
 
 	var brewsterAngle=Math.atan(Math.abs(n2)/Math.abs(n1));
-	
 		// If not possible to calculate
 		if (isNaN(brewsterAngle)) {	
 			//alert("No Brewster Angle exists");
 		} 
 		
 	var brewsterAngleDeg = Math.ceil(brewsterAngle*180/Math.PI*10)/10;		// Accurate by 0.1 degree
+	
 	return brewsterAngleDeg;
-	// Calculate total reflectino angle
 }
 
-
+// SET BREWSTE RANGLE
 function setBrewsterAngle() {
 	var brewsterAngleDeg=findBresterAngle();
 	document.getElementById("theta1").value=brewsterAngleDeg*10;
-	// Calculate total reflectino angle
 }
+
+// SET ANY ANGLE
 function setThetaAngle(angle_deg) {
 	document.getElementById("theta1").value=angle_deg;
 }
 
+// SET ANY FREQUENCY
 function setFrequencyRay1(fTHz) {
 	document.getElementById("range_frequency1").value=fTHz;
 }
 
-
-// DOWNLOAD CANVASES https://stackoverflow.com/questions/29551841/merge-multiple-canvases-and-download-as-image
-// https://stackoverflow.com/questions/11112321/how-to-save-canvas-as-png-image
+// DOWNLOAD CANVASES - merges 3 canvases, white, backgroudn and front to one.
 function downloadCanvas() {
-
+	// Copyright to this guy?
+	// https://stackoverflow.com/questions/29551841/merge-multiple-canvases-and-download-as-image
+	// https://stackoverflow.com/questions/11112321/how-to-save-canvas-as-png-image
 
 	var canvas = document.getElementById("test_canvas");
-	canvas.width=canvasWidth;
-	canvas.height=canvasHeight;
+		canvas.width=canvasWidth;
+		canvas.height=canvasHeight;
 	
 	var ctx = canvas.getContext("2d");
-	ctx.fillStyle = "white";
-	ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-
+		ctx.fillStyle = "white";
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 
   var backgroundCanvas = document.getElementById('background_canvas');
@@ -1418,19 +1415,21 @@ function downloadCanvas() {
 
   var dataURL = whiteCanvas.toDataURL("image/png");
   var link = document.createElement('a');
-  link.download = "ŽAREK.png";
+  
+  link.download = "ZAREK.png";
   link.href = whiteCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
   link.click();
 }
 
-
-function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){ https://riptutorial.com/html5-canvas/example/18136/line-with-arrowheads
-// x0,y0: the line's starting point
-// x1,y1: the line's ending point
-// width: the distance the arrowhead perpendicularly extends away from the line
-// height: the distance the arrowhead extends backward from the endpoint
-// arrowStart: true/false directing to draw arrowhead at the line's starting point
-// arrowEnd: true/false directing to draw arrowhead at the line's ending point
+// DRAW ARRAYS
+function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
+	// x0,y0: the line's starting point
+	// x1,y1: the line's ending point
+	// width: the distance the arrowhead perpendicularly extends away from the line
+	// height: the distance the arrowhead extends backward from the endpoint
+	// arrowStart: true/false directing to draw arrowhead at the line's starting point
+	// arrowEnd: true/false directing to draw arrowhead at the line's ending point
+	// Copyright:  https://riptutorial.com/html5-canvas/example/18136/line-with-arrowheads
  
 	var dx=x1-x0;
     var dy=y1-y0;
@@ -1442,6 +1441,7 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
     ctx.beginPath();
     ctx.moveTo(0,0);
     ctx.lineTo(length,0);
+	
     if(arrowStart){
         ctx.moveTo(aLength,-aWidth);
         ctx.lineTo(0,0);
@@ -1452,53 +1452,45 @@ function drawLineWithArrows(x0,y0,x1,y1,aWidth,aLength,arrowStart,arrowEnd,ctx){
         ctx.lineTo(length,0);
         ctx.lineTo(length-aLength,aWidth);
     }
-    //
+    
     ctx.stroke();
     ctx.setTransform(1,0,0,1,0,0);
 	ctx.beginPath();			// I can't stroke before I transform...
 	
 }
 
-// FUNCTION JUST FOR PRESENTATION PURPOSES
+// BUTTONS!!! PRESET 
 // -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-function setSignalSimulationParameters(time,radio_id_manual,markFronts,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2,markFields,range_speed,range_sampling,range_dotSize) {
+function setSignalSimulationParameters(time,radio_id_manual,makrCurves,showReflecterRay,range_refracted_raylenght,range_frequency1,range_frequency2,theta1,range_n1,range_n2,range_n2z2,markFields,range_speed,range_sampling,range_dotSize) {
 
-t=time*1000;
+	t=time*1000;
 
-document.getElementById("radio_id_manual").checked=radio_id_manual
-document.getElementById("markFronts").checked=markFronts
-document.getElementById("markFields").checked=markFields
+	// CHECKED
+		document.getElementById("radio_id_manual").checked=radio_id_manual
+		document.getElementById("makrCurves").checked=makrCurves
+		document.getElementById("markFields").checked=markFields
+		document.getElementById("showReflecterRay").checked=showReflecterRay
 
+	// VALUE
+		document.getElementById("range_refracted_raylenght").value=range_refracted_raylenght
+		document.getElementById("range_frequency1").value=range_frequency1
+		document.getElementById("range_frequency2").value=range_frequency2
+		document.getElementById("theta1").value=theta1
+		document.getElementById("range_speed").value=range_speed
+		document.getElementById("range_sampling").value=range_sampling
+		document.getElementById("range_dotSize").value=range_dotSize
 
-document.getElementById("showReflecterRay").checked=showReflecterRay
+	// RANGE
+		document.getElementById("range_n1").value=range_n1
+		document.getElementById("range_n2").value=range_n2
+		document.getElementById("range_n2z2").value=range_n2z2
 
-document.getElementById("range_refracted_raylenght").value=range_refracted_raylenght
-document.getElementById("range_frequency1").value=range_frequency1
-document.getElementById("range_frequency2").value=range_frequency2
-document.getElementById("theta1").value=theta1
-document.getElementById("range_speed").value=range_speed
-document.getElementById("range_sampling").value=range_sampling
-document.getElementById("range_dotSize").value=range_dotSize
-
-
-
-document.getElementById("range_n1").value=range_n1
-document.getElementById("range_n2").value=range_n2
-document.getElementById("range_n2z2").value=range_n2z2
-
-
-
-//setSignalSimulationParameters(1,1,1,23,446,370,0,105,115,149)
-//setSignalSimulationParameters(1,1,1,23,446,330,0,105,133,157)
 }
-
 
 </script>
 
 <body onLoad="init();">
-
-
-TEST 1:<span id="test1">ready</span></br>
+<!-- TEST 1:<span id="test1">ready</span></br>
 TEST 2:<span id="test2">ready</span></br>
 TEST 3:<span id="test3">ready</span> <br />
 TEST 4:<span id="test4">ready</span></br>
@@ -1512,96 +1504,108 @@ TEST 11:<span id="test11">ready</span></br>
 TEST 12:<span id="test12">ready</span> <br />
 TEST 13:<span id="test13">ready</span> <br />
 TEST 14:<span id="test14">ready</span> <br />
-TEST 15:<span id="test15">ready</span> <br />
+TEST 15:<span id="test15">ready</span> <br /> -->
 
  <div id="overlay_parent">
 	 <div id="overlay_content">
 		<div class="row">	
+				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+
+
 			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA |  NESKONČNO OZKA | SVETLOBNA | TEM ŽARKA | Z NUMERIČNO APERTURO NIČ |  
 			KI PRESTOPATA MEJO DVEH RAZLIČNIH (disperzivnih ali nedisperzivnih) materialOV, OPISANA Z VALOVNO TEORIJO SVETLOBE. 
 			(torej - v naravi neobstoječa)
 		</div>
 		<!-- SIMULACIJA -->
-		<div class="row">
+			<div class="row">
+
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+				<div class="column" id="levi">					
+						<h2>SIMULACIJA</h2>
+						<button id="button_reset" onclick="reset_time()">t = 0</button>
+						<button id="button_pause" value="1" onclick="pause_time()">STOP</button> <br /><br />
+						<b>Čas: </b><span id="value_time"></span> femtosekund <br>
+						<b>Štoparica:<b/> <span id="value_timer"></span>  fs<br />
+
+					<br />
+						Hitrost: <span id="value_speed"></span>x <br />
+						<input type="range" id="range_speed" min="1" max="40" value="20">
+					<br />
+					
+					
+						Število vzorcev na mikrometer:<span id="value_sampling"></span> <br />
+						<input type="range" id="range_sampling" min="1" max="300" value="60">
+					<br />
+					
+					
+						Velikost vzorčne pike:<span id="value_dotSize"></span> pik <br />
+						<input type="range" id="range_dotSize" min="100" max="500" value="150">
+					<br />
+					
+					
+						Širina fronte /ali/ Amplituda: <span id="value_amplitude"></span>x <br />
+						<input type="range" id="range_amplitude" min="1" max="300" value="20">
+					<br />
+					
+					
+						Dolžina lomnega žarka:<span id="value_refracted_raylenght"></span>μm <br />
+						<input type="range" id="range_refracted_raylenght" min="1" max="23" value="7">
+					<br />
 
 
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
-			<div class="column" id="levi">					
-					<h2>SIMULACIJA</h2>
-					<button id="button_reset" onclick="reset_time()">t = 0</button>
-					<button id="button_pause" value="1" onclick="pause_time()">STOP</button> <br /><br />
-					<b>Čas: </b><span id="value_time"></span> femtosekund <br>
-					<b>Štoparica:<b/> <span id="value_timer"></span>  fs<br />
+					<br />
+					Skrij odbojni žarek: <input type="checkbox" id="showReflecterRay" checked="checked"> 
+					<br />
+					
+					<br />
+					Prikaži izračune: <input type="checkbox" id="showCalculations" checked="checked"> 
+					<br />
 
-				<br />
-					Hitrost: <span id="value_speed"></span>x <br />
-					<input type="range" id="range_speed" min="1" max="40" value="20">
-				<br />
+
+					<hr />
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+					
 				
-				<br />
-					Število vzorcev na mikrometer:<span id="value_sampling"></span> <br />
-					<input type="range" id="range_sampling" min="1" max="300" value="60">
-				<br />
-				
-				<br />
-					Velikost vzorčne pike:<span id="value_dotSize"></span> pik <br />
-					<input type="range" id="range_dotSize" min="100" max="500" value="150">
-				<br />
-
-				
-				<br />
-					Dolžina lomnega žarka:<span id="value_refracted_raylenght"></span>μm <br />
-					<input type="range" id="range_refracted_raylenght" min="1" max="23" value="7">
-				<br />
-
-
-				<br />
-				Skrij odbojni žarek: <input type="checkbox" id="showReflecterRay" checked="checked"> 
-				<br />
-				
-				<br />
-				Prikaži izračune: <input type="checkbox" id="showCalculations" checked="checked"> 
-				<br />
-
-
-				<hr />
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<h2>ŽARKI</h2>
-				<b>Frekvenca žarka 1:</b> <span id="value_frequency1"></span> THz <br />
-				<input type="range" id="range_frequency1" min="50" max="900" value="460"> <br/>
-				
-				<b>Frekvenca žarka 2</b>: <span id="value_frequency2"></span> THz <br />
-				<input type="range" id="range_frequency2" min="50" max="900" value="370"> <br/>
-				
-				θ - kot Theta: <span id="value_theta1"></span>° <br />
-				<input type="range" id="theta1" min="0" max="900" value="250"></br>
-				<br/>
-				<button id="button_totalref" onclick="setCriticalAngle();">Kritični kot žarka 1</button>  &nbsp; &nbsp;
-				<button id="button_totalref" onclick="setBrewsterAngle();">Brewsterjev kot žarka 1</button> &nbsp; &nbsp;
-				<button onclick="setThetaAngle(0)">Theta=0</button></br>
+					<b>Frekvenca žarka 1:</b> <span id="value_frequency1"></span> THz <br />
+					<input type="range" id="range_frequency1" min="50" max="900" value="460"> <br/>
+					
+					<b>Frekvenca žarka 2</b>: <span id="value_frequency2"></span> THz <br />
+					<input type="range" id="range_frequency2" min="50" max="900" value="370"> <br/>
+					
+					θ - kot Theta: <span id="value_theta1"></span>° <br />
+					<input type="range" id="theta1" min="0" max="900" value="250"></br>
+					<br/>
+					<button id="button_totalref" onclick="setCriticalAngle();">Kritični kot žarka 1</button>  &nbsp; &nbsp;
+					<button id="button_totalref" onclick="setBrewsterAngle();">Brewsterjev kot žarka 1</button> &nbsp; &nbsp;
+					<button onclick="setThetaAngle(0)">Theta=0</button></br>
 
-				<i><span id="message_noCriticalAngle" color="red"></span></i>
-				<br /><br />
-				
-				Polarizacija obeh žarkov <br />
-				P <input type="range" id="range_polarisation" width"50" min="0" max="1" value="0"> S 
-				
-				<br />
-				<br />
-				
-				Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
-				Povezane točke: <input type="radio" name="pointsOrFronts"  id="markFronts" checked="1"> |
-				Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1"> 				
-				Linije: <input type="radio" name="pointsOrFronts" id="markLines" checked="1"> 				
-				
-				<br />
-				<br />
+					<i><span id="message_noCriticalAngle" color="red"></span></i>
+					<br /><br />
+					
+					Polarizacija obeh žarkov <br />
+					P <input type="range" id="range_polarisation" width"50" min="0" max="1" value="0"> S 
+					
+					<br />
+					<br />
+					
+					Točke: <input type="radio" name="pointsOrFronts"  id="markPoins" checked="1"> | 
+					Povezane točke: <input type="radio" name="pointsOrFronts"  id="makrCurves" checked="1"> | 
+					Fronte: <input type="radio" name="pointsOrFronts" id="markFronts" checked="1"> 				
+					<span style="visibility: hidden">Polja: <input type="radio" name="pointsOrFronts" id="markFields" checked="1" style="visibility: hidden;" ></span>	
 
-				<hr />
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->		
-				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+					<br />
+					<br />
+
+					
+
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->		
+					<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
+					<hr />
+
 				<h2>MATERIAL</h2>
 					<span id="hidden_1n">
 					<b>Lomni količnik zgornjega medija: n1:</b> <span id="value_n1"></span> <br />
@@ -1610,7 +1614,7 @@ TEST 15:<span id="test15">ready</span> <br />
 					
 					<span id="hidden_2n">
 					<b>Lomni količnik spodnjega medija: n2:</b> <span id="value_n2"></span> <br>
-					<input type="range" id="range_n2" min="10" max="300" value="100"></br>
+					<input type="range" id="range_n2" min="-300" max="300" value="100"></br>
 					</span>
 					<br />			
 					
@@ -1651,6 +1655,7 @@ TEST 15:<span id="test15">ready</span> <br />
 					<select id="menu_material_bottom">
 						<option value="sio2">STEKLO SiO2</option>
 					   <option value="Yb2O3">Yb2O3</option>
+					  <option value="TiO2">TiO2</option>
 					  <option value="vakum">Vakum</option>
 
 
@@ -1701,7 +1706,6 @@ TEST 15:<span id="test15">ready</span> <br />
 				<h2>BLIŽNJICE</h2>
 				
 				
-				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
 				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200)"> Negativna skupinska hitrost1, sk>c0</button><br />
 				
 				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
@@ -1712,12 +1716,28 @@ TEST 15:<span id="test15">ready</span> <br />
 				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
 				
 				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200)"> Skupinska hitrost višja od fazne</button><br />				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,133,157,0,20,60,200)"> Skupinska hitrost višja od fazne in c0</button><br /><br />
+				<button onclick="setSignalSimulationParameters(15,1,1,0,23,  446,330,0,105,133,  157,0,20,60,200)"> Skupinska hitrost višja od fazne in c0</button><br />
+
+												<!--			time,radio_id_manual, makrCurves, showReflecterRay, range_refracted_raylenght,
+																range_frequency1, range_frequency2, theta1, range_n1, range_n2,
+																range_n2z2, markFields, range_speed, range_sampling, range_dotSize) {
+												-->
+				<br />
+				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,832,0,85,-62, 62,0,1,60,200)"> Fazna hitrost 0, skupinska pozitivna smer</button><br />
+				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,708,0,85,-62, 62,0,1,60,200)"> Fazna hitrost 0, skupinska negativna smer</button><br />
+			
+
+				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 518,354,0,55,-92, 147,0,1,60,200)"> Fazna hitrostnegativna , skupinska pozitivna=0</button><br /><br />
+
+
+
+
+
 
 				<button onclick="setSignalSimulationParameters(1000,1,0,0,7,900,900,369,160,290,214,1,5,267,325)"> Interferenčni vzorec</button><br /><br />
 
 
-				<button onclick="setGroupVelocityHigehrThanPhaseVelocity()"> </button>
+				<button onclick="downloadCanvas()"> IZVOZI V PNG</button><br />
 
 				
 				
@@ -1744,19 +1764,6 @@ TEST 15:<span id="test15">ready</span> <br />
 								<br /><br />
 							</b>
 						</span>	
-						
-				<br><br>
-				UP <br>
-				DOWN<br>
-				LEFT<br>
-				RIGHT<br>
-				SPACEBAR<br>
-				T<br>
-				B<br>
-				V<br>
-				P<br>
-				
-
 		 </div>
 			
 			<div class="column" id="desni">    
@@ -1770,9 +1777,6 @@ TEST 15:<span id="test15">ready</span> <br />
 					<a href="https://youtu.be/kMSgE62S6oo?t=117" style="float:right; font-size: 10px; color:gray;"> By the way, light is actually particles, not waves: https://youtu.be/kMSgE62S6oo?t=117</a>
 				</div>
 				
-				
-			
-
 				<!-- MESSAGES IN THE POPUPS -->
 
 					
@@ -1783,22 +1787,11 @@ TEST 15:<span id="test15">ready</span> <br />
 								By default, the equation to calculate n is: <br /><br />
 						<span align="center"> n+((fTHz-300)/300)*dispersivity. </span><br /><br />
 						 </span>
-					  
-					
-				
-				
-				
-				
 			</div>
 			
 		</div>
 
 		  <canvas id="test_canvas"></canvas>
-
-
-
-
-
 	</div>
 	<div id="overlay_popup">
 	</div>
