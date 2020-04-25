@@ -383,21 +383,50 @@ function draw(ctx1,canvas) {
 			}
 
 	//  HIDE settings setting n2 of second ray, if its no chosen
-		// IF RADIO BUTTON 
+
+		
+		// WHEN TO SHOW n1 slider??.. .
+		if (	document.getElementById("radio_id_nonedispersive").checked == true ||
+				document.getElementById("radio_id_onlybottmdispersive").checked == true ||
+				document.getElementById("radio_id_specialmedium").checked == true ||
+				document.getElementById("radio_id_manual").checked == true) {
+			document.getElementById("hidden_1n").style.visibility = 'visible';
+		} else {
+			document.getElementById("hidden_1n").style.visibility = 'hidden';
+		}
+		
+		// WHEN TO SHOW n2 slider??.. shuld this be done with SWITCH?...nope..
+		if (	document.getElementById("radio_id_nonedispersive").checked == true ||
+				document.getElementById("radio_id_onlytopdispersive").checked == true ||
+				document.getElementById("radio_id_manual").checked == true) {
+			document.getElementById("hidden_2n").style.visibility = 'visible';
+		} else {
+			document.getElementById("hidden_2n").style.visibility = 'hidden';
+		}
+
+		// When to show n2z2 slider?
 		if (document.getElementById("radio_id_manual").checked == true) {
-				// SET VISIBILITY OF RANGE TO VISIBLE
 			document.getElementById("hidden_2nz2").style.visibility = 'visible';
 		} else {
 			document.getElementById("hidden_2nz2").style.visibility = 'hidden';
+		}
 
+		// When to show dropdown menu for top material = left dropdown?
+		if (	document.getElementById("radio_id_onlytopdispersive").checked == true || 
+				document.getElementById("radio_id_bothdispersive").checked == true) {
+			document.getElementById("hidden_dropdownLeft").style.visibility = 'visible';
+		} else {
+			document.getElementById("hidden_dropdownLeft").style.visibility = 'hidden';
 		}
 		
-		// IF DISPERSIVE MEDIA CHOSEN BUT NOT SPECIAL ONES
-		if (document.getElementById("radio_id_onlytopdispersive").checked == true || document.getElementById("radio_id_onlybottmdispersive").checked == true || document.getElementById("radio_id_bothdispersive").checked == true) {
-				document.getElementById("hidden_dispersivity").style.visibility = 'visible';
+		// When to show dropdown menu for bottom material = right dropdown?
+		if (	document.getElementById("radio_id_onlybottmdispersive").checked == true ||
+				document.getElementById("radio_id_bothdispersive").checked == true) {
+			document.getElementById("hidden_dropdownRight").style.visibility = 'visible';
 		} else {
-				document.getElementById("hidden_dispersivity").style.visibility = 'hidden';
-		}
+			document.getElementById("hidden_dropdownRight").style.visibility = 'hidden';
+		}		
+		
 
 	
 		// DRAW BOTH RAYS
@@ -429,7 +458,11 @@ function draw(ctx1,canvas) {
 		// IS MEDIA DISPERSIVE; WHICH AND HOW?
 			// check which option is selected
 			var radios = document.getElementsByName('radio_dispersion');
-			var dispersivity=document.getElementById('range_dispersion').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+			var materialTop=document.getElementById('menu_material_top').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+			var materialBottom=document.getElementById('menu_material_bottom').value; 		// dispersivity is something I Made up - mainy, how mow much does the light "spread" depending on the frequency.
+//document.getElementById("test1").innerHTML=materialTop
+//document.getElementById("test2").innerHTML=materialBottom
+
 
 			for (var i = 0, length = radios.length; i < length; i++) {
 				// Non dispersive media
@@ -442,8 +475,8 @@ function draw(ctx1,canvas) {
 				
 				// TOP Media Dispersive
 				} else if (radios[1].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,dispersivity);	
-					n1ray2=getDispersiveN(n1,fTHz2,dispersivity);	
+					n1ray1=getDispersiveN(n1,fTHz,materialTop);	
+					n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
 					n2ray1=n2;	
 					n2ray2=n2;	
 					break;
@@ -452,16 +485,16 @@ function draw(ctx1,canvas) {
 				} else if (radios[2].checked) {
 					n1ray1=n1;	
 					n1ray2=n1;
-					n2ray1=getDispersiveN(n2,fTHz,dispersivity);		
-					n2ray2=getDispersiveN(n2,fTHz2,dispersivity);	
+					n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
+					n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
 					break;
 					
 				// BOTH Media Dispersive
 				} else if (radios[3].checked) {
-					n1ray1=getDispersiveN(n1,fTHz,dispersivity);	
-					n1ray2=getDispersiveN(n1,fTHz2,dispersivity);	
-					n2ray1=getDispersiveN(n2,fTHz,dispersivity);		
-					n2ray2=getDispersiveN(n2,fTHz2,dispersivity);	
+					n1ray1=getDispersiveN(n1,fTHz,materialTop);	
+					n1ray2=getDispersiveN(n1,fTHz2,materialTop);	
+					n2ray1=getDispersiveN(n2,fTHz,materialBottom);		
+					n2ray2=getDispersiveN(n2,fTHz2,materialBottom);	
 					break;
 					
 				// Specially dispersive media on which all wavelenghts are the same
@@ -543,7 +576,7 @@ function draw(ctx1,canvas) {
 				
 				// HTML INFORMING FOR BUTTON
 				if (isNaN(criticalAngle1)) {	
-					document.getElementById("message_noCriticalAngle").innerHTML="Kritični kot za žarek 1 obstaja";
+					document.getElementById("message_noCriticalAngle").innerHTML="Kritični kot za žarek 1 <b>NE</b> obstaja";
 				} else {
 					document.getElementById("message_noCriticalAngle").innerHTML="";
 				}
@@ -700,33 +733,53 @@ function draw(ctx1,canvas) {
 		
 };
 
-function getDispersiveN(n,fTHz,dispersivity) {
+function getDispersiveN(n,fTHz,material) {
 	//return (n+((fTHz-300)/300)*dispersivity);					// n is linearly related to f
 	//return (n+Math.pow(fTHz/370,30));					// n is linearly related to f
 	//return (n+Math.pow(fTHz/100*n,dispersivity/2))
-	
-	// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
-
-	var A=0.6961663;
-	var B=0.0684043;
-	var C=0.4079426;
-	var D=0.1162414;
-	var E=0.8974794;
-	var F=9.896161;
 	var L=calculate_wavelenght(fTHz,1);
-	
-	var Asq=Math.pow(A,2);
-	var Bsq=Math.pow(B,2);
-	var Csq=Math.pow(C,2);
-	var Dsq=Math.pow(D,2);
-	var Esq=Math.pow(E,2);
-	var Fsq=Math.pow(F,2);
 	var Lsq=Math.pow(L,2);
+	
+	if (material=="sio2") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=SiO2&page=Malitson
+		var A=0.6961663;
+		var B=0.0684043;
+		var C=0.4079426;
+		var D=0.1162414;
+		var E=0.8974794;
+		var F=9.896161;
+		
+		var Asq=Math.pow(A,2);
+		var Bsq=Math.pow(B,2);
+		var Csq=Math.pow(C,2);
+		var Dsq=Math.pow(D,2);
+		var Esq=Math.pow(E,2);
+		var Fsq=Math.pow(F,2);
 
-	var n = 1 + (  (A*Lsq) / ( Lsq - Bsq )  ) + (  (C*Lsq)/( Lsq - Dsq )  ) + (  (E*Lsq)/( Lsq - Fsq )  );
-	var n = Math.sqrt(n);
+		var n = 1 + (  (A*Lsq) / ( Lsq - Bsq )  ) + (  (C*Lsq)/( Lsq - Dsq )  ) + (  (E*Lsq)/( Lsq - Fsq )  );
+		var n = Math.sqrt(n);
 
-
+	} else if (material=="Yb2O3") {
+		// for SiO2 at Temperature 20°C:
+		var A=2.647;
+		var B=0.01800;
+		
+		var n = 1 + ( A * Lsq ) / ( Lsq - B );
+		var n = Math.sqrt(n);
+		
+	} else if (material=="TiO2") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
+		var A=5.913;
+		var B=0.2441;
+		var C=0.0803;
+	
+		var n = (A) + ( (  B  )/(  Lsq - C  ) )
+		var n = Math.sqrt(n);
+		
+	} else if (material=="vakum") {
+		// for SiO2 at Temperature 20°C: https://refractiveindex.info/?shelf=main&book=TiO2&page=Devore-o
+		var n = 1;
+	}
 
 
 	return n;
@@ -1465,7 +1518,7 @@ TEST 15:<span id="test15">ready</span> <br />
 	 <div id="overlay_content">
 		<div class="row">	
 			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA |  NESKONČNO OZKA | SVETLOBNA | TEM ŽARKA | Z NUMERIČNO APERTURO NIČ |  
-			KI PRESTOPATA MEJO DVEH RAZLIČNIH (disperzivnih ali nedisperzivnih) MATERJALOV, OPISANA Z VALOVNO TEORIJO SVETLOBE. 
+			KI PRESTOPATA MEJO DVEH RAZLIČNIH (disperzivnih ali nedisperzivnih) materialOV, OPISANA Z VALOVNO TEORIJO SVETLOBE. 
 			(torej - v naravi neobstoječa)
 		</div>
 		<!-- SIMULACIJA -->
@@ -1549,12 +1602,16 @@ TEST 15:<span id="test15">ready</span> <br />
 				<hr />
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->		
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
-				<h2>MATERJAL</h2>
+				<h2>MATERIAL</h2>
+					<span id="hidden_1n">
 					<b>Lomni količnik zgornjega medija: n1:</b> <span id="value_n1"></span> <br />
 					<input type="range" id="range_n1" min="-10" max="300" value="160"></br>
+					</span>
 					
+					<span id="hidden_2n">
 					<b>Lomni količnik spodnjega medija: n2:</b> <span id="value_n2"></span> <br>
 					<input type="range" id="range_n2" min="10" max="300" value="100"></br>
+					</span>
 					<br />			
 					
 					<span id="hidden_2nz2">
@@ -1564,29 +1621,48 @@ TEST 15:<span id="test15">ready</span> <br />
 					
 					
 					
-				<!-- Dispersivity -->
-				<span id="hidden_dispersivity"">
-					  <span onMouseOver="document.getElementById('popup_dispersitivity').style.display='block'" onMouseOut="document.getElementById('popup_dispersitivity').style.display='none'">
-							<b>Faktor disperzije [?]</b>
+				<!-- LeFT DROPDOWN MENU -->
+				<span id="hidden_dropdownLeft">
+					material:
+					  <span onMouseOver="document.getElementById('popup_material').style.display='block'" onMouseOut="document.getElementById('popup_material').style.display='none'"> 
+							[?]
 					  </span>
 							<!-- POPUPT:  FAKTOR DISPERZIJE: -->
-						  <span id="popup_dispersitivity" class="white_content">
-							<b>
-								Odvisnost lomnega količnka je odvisna od frekvence signala na sledeč način:<br/><br />
-								n2 + Math.pow(fTHz/100*n2,faktor-disperizje/2)<br /><br />
-								ZAKAJ?  TESTING---					  
-					  
-							</b>
+						<span id="popup_material" class="white_content">
+								IZBERI MEDIJ; ENAČBA ZA APROKSIMACIJO POBRANA IZ...	 velja pri temperaturi 20°C		  
 						</span>		
+					<br />
+						<span id="value_randgedispersion"></span></br>
+					<!--  DROPDOWN MENU-->
+					
+					<select id="menu_material_top">
+					  <option value="sio2">STEKLO SiO2</option>
+					  <option value="Yb2O3">Yb2O3</option>
+					  <option value="TiO2">TiO2</option>
+					  <option value="vakum">Vakum</option>
 
-					  
-					  
-					<br />
-					<input type="range" id="range_dispersion" min="1" max="10" value="1"><span id="value_randgedispersion"></span></br>
-					<br />
+
+					</select>
+
 				</span>
 				
-					<input type="radio"name="radio_dispersion" checked="checked" value="0">	Oba medija brez disperzije </input><br>
+				<!-- LeFT DROPDOWN MENU -->
+				<span id="hidden_dropdownRight">					
+					<select id="menu_material_bottom">
+						<option value="sio2">STEKLO SiO2</option>
+					   <option value="Yb2O3">Yb2O3</option>
+					  <option value="vakum">Vakum</option>
+
+
+					</select>
+				</span>
+					
+					
+					
+					<br />
+					<br />
+				
+					<input type="radio"name="radio_dispersion" checked="checked" value="0" id="radio_id_nonedispersive">	Oba medija brez disperzije </input><br>
 					<input type="radio"name="radio_dispersion" value="1" id="radio_id_onlytopdispersive">					Gornji medij disperziven</input><br>
 					<input type="radio"name="radio_dispersion" value="2" id="radio_id_onlybottmdispersive">					Spodnji medij disperziven </input><br>
 					<input type="radio"name="radio_dispersion" value="3" id="radio_id_bothdispersive">					Oba medija disperzivna</input><br>
@@ -1701,7 +1777,7 @@ TEST 15:<span id="test15">ready</span> <br />
 
 					
 					<!-- POPUP DISPERSITIVITY: ID=light -->
-						 <span id="popup_dispersitivity" class="white_content">
+						 <span id="popup_material" class="white_content">
 								Dispersivity is a made-up property of a fictional material (could be real, I have no idea). 
 								It tell how much the change of frequency changes therefraction index for that frequency.  
 								By default, the equation to calculate n is: <br /><br />
