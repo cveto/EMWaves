@@ -3,6 +3,7 @@
 
 <html>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
 body {
   background-color: linen;
@@ -311,7 +312,14 @@ function init() {
 			fillTextkaro("ŽAREK 2",21,5,ctx2,DPmm);	ctx2
 			fillTextkaro("ŽAREK 1 + ŽAREK 2",31,5,ctx2,DPmm);	 
 			ctx2.stroke();
-			
+
+		// Podpis
+			ctx2.beginPath();
+			ctx2.font = "15px Lucida Console";
+			ctx2.fillStyle = "#DCDCDC";														
+			ctx2.fillText("https://github.com/cveto/EMWaves", 430,1660);					
+			ctx2.stroke();						
+
 
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// Animated Canvas - THIS IS THE ONE THAT CHANGES 40 times a secon...
