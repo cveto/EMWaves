@@ -26,6 +26,13 @@ input[type="range"] {
 
 }
 
+.button_preset {
+  padding: 5px 5px;
+  width: 380px;
+  text-align: center;
+  font-weight: bold;
+}
+
 .row {
    /*border: 3px solid blue;  */
    width: 1800px; 
@@ -1621,9 +1628,9 @@ TEST 15:<span id="test15">ready</span> <br />  -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 				<!-- +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ -->
 
-			<b> | IDEALNO ENOBARVNA | LINEARNO POLARIZIRANA | KOHERENTNA |  "NESKONČNO OZKA" !?! "TEM | SVETLOBNA ŽARKA"  |  Z NUMERIČNO APERTURO NIČ |  
+			<b> | IDEALNO MONOKROMATSKA | LINEARNO POLARIZIRANA | KOHERENTNA |  "NESKONČNO OZKA" !?! "TEM | SVETLOBNA ŽARKA"  |  
 
-			KI PRESTOPATA V NESKONČNO DOLG MEDIJ Z OPTIČNO RAZLIČNO GOSTOTO. 
+			KI PRESTOPATA V PROZOREN NEMAGNETEN BREZIZGUBEN OPTIČNO NE-DIFUZIVEN MEDIJ OPTIČNO RAZLIČNE GOSTOTE. 
 		</div>
 		<!-- SIMULACIJA -->
 			<div class="row">
@@ -1836,17 +1843,17 @@ TEST 15:<span id="test15">ready</span> <br />  -->
 				<h2>PREDNASTAVLJENE VREDNOSTI</h2>
 				
 				
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk>c0</button><br />
+				<button class="button_preset" onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,149,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk>c0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(12,1,1,0,23,446,370,0,105,115,173,0,20,60,200, 30,0)"> Negativna skupinska hitrost1, sk pol fazne,  </button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101,0,20,60,200, 30,0)"> Fazna hitrost pol višja od skupinske</button><br />
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101,0,20,60,200, 30,0)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,104,101,0,20,60,200, 30,0)"> Fazna hitrost pol višja od skupinske</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,124,101,0,20,60,200, 30,0)"> Fazna hitrost višja od skupinske, sk skoraj 0</button><br />
 
-				<button onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(50,1,1,0,23,624,603,0,228,172,149,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne, sk skoraj 0</button><br />
 				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne</button><br />				
-				<button onclick="setSignalSimulationParameters(15,1,1,0,23,  446,330,0,105,133,  157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne in c0</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(15,1,1,0,23,446,330,0,105,145,157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne</button><br />				
+				<button class="button_preset"  onclick="setSignalSimulationParameters(15,1,1,0,23,  446,330,0,105,133,  157,0,20,60,200, 30,0)"> Skupinska hitrost višja od fazne in c0</button><br />
 
 												<!--			time, radio_id_manual, makrCurves, showReflecterRay, range_refracted_raylenght,
 																range_frequency1, range_frequency2, theta1, range_n1, range_n2,
@@ -1854,26 +1861,26 @@ TEST 15:<span id="test15">ready</span> <br />  -->
 																range_amplitude, markFronts, radio_id_specialmedium
 												-->
 				<br />
-				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,832,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska pozitivna smer</button><br />
-				<button onclick="setSignalSimulationParameters(300,1,1,0,23, 760,708,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska negativna smer</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(300,1,1,0,23, 760,832,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska pozitivna smer</button><br />
+				<button class="button_preset"  onclick="setSignalSimulationParameters(300,1,1,0,23, 760,708,0,85,-62, 62,0,1,60,200, 30,0)"> Fazna hitrost 0, skupinska negativna smer</button><br />
 							
 
 
-				<button onclick="setSignalSimulationParameters( 300,	1,		1,		0,		23, 
+				<button class="button_preset"  onclick="setSignalSimulationParameters( 300,	1,		1,		0,		23, 
 																518,	354,	0,		55,		-92, 
 																147,	0,		1,		60,		200, 
 																30,		0)"> Fazna hitrostnegativna , skupinska pozitivna=0</button><br /><br />
 
 
 				
-				<button onclick="setSignalSimulationParameters(	1000,	1,		0,		0,		23, 
+				<button class="button_preset"  onclick="setSignalSimulationParameters(	1000,	1,		0,		0,		23, 
 																446,	370,	3,		105,	115, 
 																149,	1,		5,		60,		426, 
 																125,	1								)"> Frontni pogled</button><br />
 
 				
 				
-				<button onclick="setSignalSimulationParameters( 0,		0,		1,		0,		23, 
+				<button class="button_preset"  onclick="setSignalSimulationParameters( 0,		0,		1,		0,		23, 
 																167,	242,	0,		102,	'x', 
 																'x',	0,		20,		60,		250, 
 																20,		0,		1)"> k=konst za vse frekvence</button><br /><br />
