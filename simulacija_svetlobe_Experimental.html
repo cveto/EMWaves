@@ -285,10 +285,14 @@ function init() {
 		
 	// DEFAULT SETTINGS - ON LOAD?
 		// Set fronts to unchecked - There apparently isn't a checked="0" which would cause it to be unchecked?
-		document.getElementById("makrCurves").checked=1;
+		document.getElementById("makrCurves").checked=0;
 		document.getElementById("markFields").checked=0;
-		document.getElementById("markPoins").checked=0;
+		document.getElementById("markPoins").checked=1;
 		document.getElementById("markFronts").checked=0;
+		
+		document.getElementById("range_dotSize").value=350;
+		document.getElementById("range_sampling").value=120;	
+		document.getElementById("range_refracted_raylenght").value=23;		
 	
 	//+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 	// Backround Canvas - these one is for shapes that don't change once loaded
@@ -320,7 +324,7 @@ function init() {
 		// Single mode fibre core 9um
 			ctx2.beginPath();
 			ctx2.rect(DPmm, DPmm*7/4, 9*DPmm, 1*DPmm/50);										// 1 micrometer reference
-			fillTextkaro(" 9μm - WIDTH OF CORE OF SINGLE-MODE OPTICAL FIBER",19,2,ctx2,DPmm);
+			fillTextkaro(" 9μm - CORE WIDTH OF SINGLE-MODE OPTICAL FIBER",19,2,ctx2,DPmm);
 			ctx2.stroke();
 
 		//  LINES
@@ -387,25 +391,52 @@ function draw(ctx1,canvas) {
 
 
 				// SCRIPT FOR RECORDING
-				var playframerate=60;
-				var framesScene1=playframerate*3;						// 3 secods Traveling to border until this frame
-				var framesScene2=framesScene1+playframerate*16;			// 15 seconds.Wave summed
-				var framesScene3=framesScene2+playframerate*6;			// 2 Waves visible un til this frame
-				var framesScene4=framesScene3+playframerate*14;			// Theta going up until this frame	
+
 				
 				
 				if (document.getElementById("button_pause").value == 1 && document.getElementById("range_simulation").value==1) {
 					// SIGNAL DEFINITION
-					
-					document.getElementById("radio_id_manual").checked=1;											
-					document.getElementById("range_frequency1").value=150;
-					document.getElementById("range_frequency2").value=150;
-					document.getElementById("range_n1").value=100*1;
-					document.getElementById("range_n2").value=100*(-1.6);			
-					document.getElementById("range_n2z2").value=100*(1.6);				
 
-					document.getElementById("range_speed").value=11;
-					document.getElementById("range_sampling").value=60;						
+					var script_speed=12;
+					var script_framerate=60;
+					var script_n1=1;
+					var script_n2_1=1.43;
+					var script_n2_2=1.58;
+					var script_signalduration=0;
+					
+					if (Math.abs(script_n2_1) > Math.abs(script_n2_2)) { 
+						var script_biggern2=Math.abs(script_n2_1)
+						} else {
+						var script_biggern2=Math.abs(script_n2_2)
+						};
+					
+					var script_f1=603
+					var script_f2=603
+					
+				    var script_framesUntilSurface=script_n1/script_speed*1650;
+					var script_framesFromSurToEnd=(script_biggern2/script_speed*7700)/23*24;		// frames utnil the slowes reaches the end.
+					
+										// At speed 11, n1=1, 150 frames to reach the border
+					var framesScene1=script_framesUntilSurface			
+					var framesScene2=framesScene1+script_framesFromSurToEnd;			//script_framerate*16;			// 15 seconds.Wave summed
+					var framesScene3=framesScene2+script_framerate*4;			// 2 Waves visible un til this frame
+					var framesScene4=framesScene3+500;			// Theta going up until this frame	
+
+
+					document.getElementById("range_speed").value=script_speed;
+					document.getElementById("range_n1").value=100*script_n1;
+
+					document.getElementById("radio_id_manual").checked=1;											
+					document.getElementById("range_frequency1").value=script_f1;
+					document.getElementById("range_frequency2").value=script_f2;
+					document.getElementById("range_n2").value=100*script_n2_1;			
+					document.getElementById("range_n2z2").value=100*(script_n2_2);				
+
+					document.getElementById("range_sampling").value=300;			
+					document.getElementById("range_pulse1_duration").value=script_signalduration;	
+					document.getElementById("range_pulse2_duration").value=script_signalduration;	
+					document.getElementById("range_pulseleftphasedelay").value=0;						
+					
 				
 
 					if (frameCounter<framesScene1) {		// 30 seconds at 60 frames per second
@@ -639,11 +670,26 @@ function draw(ctx1,canvas) {
 				}		
 		
 		// DRAW ARRAYS; SAVE DATA TO ARRAY
-			// LEFTMOST
-			var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,Amp,n1ray1,n2ray1,ctx1);
+			// LEFTMOST -- Lenght of the pulse traveling
+			var pulse1_duration=Number(document.getElementById("range_pulse1_duration").value);
+			document.getElementById("value_pulse1_duration").innerHTML=pulse1_duration;
+						
+			var phase_delay_left=document.getElementById("range_pulseleftphasedelay").value;
+			document.getElementById("value_pulseleftphasedelay").innerHTML=phase_delay_left;
+			phase_delay_left=phase_delay_left*Math.PI/180;
+			
+			var time_delay_left=37287.6915;
+			//time_delay_left=Number(document.getElementById("range_timeDelaySignal1").value);		
+			
+			var arrays_leftmost=draw2rays(fTHz,wave1[1],xCenter1,yCenter1,Amp,n1ray1,n2ray1,ctx1,pulse1_duration,phase_delay_left,time_delay_left);
 
 			// MIDDLE
-			var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+DPmm*6,yCenter1,Amp,n1ray2,n2ray2,ctx1);		
+			var pulse2_duration=Number(document.getElementById("range_pulse2_duration").value);
+			document.getElementById("value_pulse2_duration").innerHTML=pulse2_duration;
+	
+			
+			
+			var arrays_middle=draw2rays(fTHz2,wave1[1],xCenter1+DPmm*6,yCenter1,Amp,n1ray2,n2ray2,ctx1,pulse2_duration,0,0);		
 
 			// RIGHT MOST RAY = RAY 1 + RAY 2 -  
 			drawSummedRayfromArray(arrays_leftmost,arrays_middle,xCenter1+DPmm*12,yCenter1,wave1[1],ctx1);		//arrays, arrays2, locX, locY, raylength
@@ -864,10 +910,10 @@ function draw(ctx1,canvas) {
 					ctx1.beginPath();
 					ctx1.fillStyle = "#303030";
 					
-					fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" μm/fs",pozX1+5,pozY3+2,ctx1,DPmm); 			
+					fillTextkaro("Δω[\u2B07]= "+deltaomegasp.toFixed(9)+" rad/μm",pozX1+5,pozY3+2,ctx1,DPmm); 			
 					fillTextkaro("Δk[\u2B07]= "+deltaksp.toFixed(9)+" μm/fs",pozX1+5,pozY3+3,ctx1,DPmm); 
 
-					fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" μm/fs",pozX1+24,pozY3+2,ctx1,DPmm); 			
+					fillTextkaro("Δω[\u21D1]= "+deltaomegazg.toFixed(9)+" rad/μm",pozX1+24,pozY3+2,ctx1,DPmm); 			
 					fillTextkaro("Δk[\u21D1]= "+deltakzg.toFixed(9)+" μm/fs",pozX1+24,pozY3+3,ctx1,DPmm); 
 					
 					fillTextkaro(messageGroupVelocity,pozX1+10,pozY3,ctx1,DPmm); 			
@@ -993,7 +1039,7 @@ function downloadCanvas() {
 
 
 // THIS ONE CALCULATES HOW TO DRAW REFLECTIVE; REFRACTIVE AND INPENDING WAVE
-function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
+function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1,pulse_duration,phase_delay,time_delay) {
 //--- WAVES---
 	
 	// Let user define refracted raylength
@@ -1019,7 +1065,8 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			var xStart=locX-raylength*DPmm*Math.cos(tilt*Math.PI/180);
 			var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 		
-		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0,1);
+		
+		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0,1,pulse_duration,phase_delay,time_delay);
 
 
 	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1032,35 +1079,15 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			var theta2rad=Math.asin(Math.sin(thetaRad)*n1/n2);	
 			var tilt2=90-theta2rad*180/Math.PI;										// Tilt is used for javascirpt canvas rotation
 		
-		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
-		// This is for E field on s plane, for power it has to be.. squared
-		// IT depends on polarization on the incoming wave
-			var pol_choice=document.getElementById("range_polarisation").value;
-			if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
-				var RpTOP=Math.abs(n1)*Math.cos(theta2rad) - Math.abs(n2)*Math.cos(thetaRad);
-				var RpBOT=Math.abs(n1)*Math.cos(theta2rad) + Math.abs(n2)*Math.cos(thetaRad);
-				var Rp=Math.pow(RpTOP/RpBOT,2);
-				var R=Rp;
-				var T=1-Rp;	
-				
-			} else if (pol_choice==1) {
-				var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(theta2rad);
-				var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(theta2rad);
-				var Rs=Math.pow(RsTOP/RsBOT,2);										
-				var R=Rs;
-				var T=1-Rs;																// E field amplitude reduced by?		
-			} else {
-				alert("I dun goffed! Something wrong with the choice of polarisation in the code");
-			}
-
+		// REFLECTANCE FRESNELL RQUATIONS
+			var R_T=getReflectance(n1,n2,thetaRad,theta2rad,fTHz);
+			var R=R_T[0];
+			var T=R_T[1];
+		
 		// Calculating the phase of ray 2 - bacause our refracted wave is simulated as a new ray and I have to know at what phase the ray 1 ends
 			var wave1_wavelength=calculate_wavelenght(fTHz,n1);
 			var wave2_phase=calculate_border_phase(raylength,wave1_wavelength);
 		
-		// IF TOTAL REFLECTION OCCURS - Ignore fresnell equations completelly; becquse infinitw
-			if (isNaN(theta2rad)) {	
-				var R=1;			
-			} 
 			
 		// Power rqtio to to E-field ratio.. I think i got this right
 			var Re=Math.sqrt(R);
@@ -1077,7 +1104,8 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 		} else {
 			
 			// ---------------REFRACTED RAY, RAY 2 ---------------
-			var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay,T);
+			var pulse2_duration=0
+			var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay,T,pulse_duration,phase_delay,time_delay);
 
 		}
 	
@@ -1114,7 +1142,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 			if (document.getElementById("range_polarisation").value==0 && theta1 == findBresterAngle(n1,n2)) {
 				var arrayReflected=new Array();											// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
 			} else  {
-				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave3_phase,n1,tdelay,R);
+				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave3_phase,n1,tdelay,R,pulse_duration,phase_delay,time_delay);
 			}		
 
 				
@@ -1129,7 +1157,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1) {
 }
 
 // FUNCTION THAT ACTUALLYD DRAWS THE WAVES
-function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,reflectance) {
+function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,reflectance,pulse_duration,phase_delay,time_delay) {
 
 	// Defined
 		var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
@@ -1163,8 +1191,8 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 		ctx1.translate(-rotatex,-rotatey);
 	
 	// THIS SIMULATES WAVE IS APPROACHING TO THE SUFACE.  I have defeated the infinite signal (pretend it does not exist)!!
-		if (t<=Math.abs(raytime)+tdelay)	{
-			var how_many_samples=(t-tdelay)*sampling*c0mmpatts/Math.abs(n)			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
+		if (t<=Math.abs(raytime)+tdelay+time_delay)	{
+			var how_many_samples=(t-tdelay-time_delay)*sampling*c0mmpatts/Math.abs(n)			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
 			var how_many_samples_from=0;
 		} else {
 			var how_many_samples=sampling*raylength;						// if 12 micrometers, then 12*sampling
@@ -1173,31 +1201,36 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 		
 			
 			
-		////// EXPERIMENTAL
-		var temp_t=Math.abs(raytime)+tdelay;
+	// THIS SIMNULATES A SHORT PULS _ ERGO _ IT DELETES THE TALE OF THE SIGNAL MAKING IT LOOK LIKE ITS A PULSE
+		if (pulse_duration != 0) {			
+			////// EXPERIMENTAL - THIS SIMULATES A SHORT PULS... looks cool no idea if correct
+			var temp_t=Math.abs(raytime)+tdelay+time_delay;
+			
+			var how_many_lambdas_in_pulse = pulse_duration*fTHz/1000;			// In the range of 10 femtoseconds	
+			var how_many_samples_max=how_many_lambdas_in_pulse*Math.abs(lambda1)*sampling;
 
-		var how_many_lambdas_in_pulse = 3;
-		var how_many_samples_max=how_many_lambdas_in_pulse*lambda1*sampling;
-		
-		
-		var wtf=(t-tdelay)*sampling*c0mmpatts/Math.abs(n)
-		var how_many_samples_from=Math.floor(wtf-how_many_samples_max);
-		
-		if (how_many_samples_from < 0) {
-			how_many_samples_from=0;
-		} else if (how_many_samples_from > 0) {
-			for (var i=0;i<=how_many_samples_from;i++) {
-				array_wave[i]=0;
-			}	
+			
+			var wtf=(t-tdelay-time_delay)*sampling*c0mmpatts/Math.abs(n)
+			var how_many_samples_from=Math.floor(wtf-how_many_samples_max);
+			
+			if (how_many_samples_from < 0) {
+				how_many_samples_from=0;
+			} else if (how_many_samples_from > 0) {
+				for (var i=0;i<=how_many_samples_from;i++) {
+					array_wave[i]=0;
+				}	
+			}
 		}
 		
 
 			
-		
+	// EXPERIMENTAL - what if instead of the phase delay we change the x in such a way to cause the phase delay. How much is this?
+	// if How much x does the wave make in in time t?  
 	
-	// STARTING TO PUT PREPARE DOTS FOR CANVAS
-		ctx1.beginPath();
-		ctx1.moveTo(xStart,yStart);	
+	
+	// STARTING TO PUT PREPARE DOTS FOR CANVAS.. WHY DOES THIS HAVE NO EFFECT DAMMIT?
+		//ctx1.beginPath();
+		//ctx1.moveTo(xStart,yStart);				
 		
 	// THE LIE THAT IS THE WAVE NATURE OF LIGHT
 		for (var i=how_many_samples_from;i<=how_many_samples;++i) {								// need variable sample size to simulate wave comming in	
@@ -1210,9 +1243,10 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 			
 			// -- MAIN FUNCTION			
 			//--------------------  										//The eqation represents a signal which is infinteley long, has allways and will exist. When presenting this on canvas
-			var f1=Amp*Math.sin(k1*x-w11*t+phaseShift);						// i am movinb both with time as well as with direction, since I am seeing the wave moving. 
-																			// The infinite ray is drawn an frozen every delat_t. How much did the wave move at this deltat? c=dl/dt --> dtl=c*dt
-			
+			//var f1=Amp*Math.sin(k1*x-w11*t+phaseShift+phase_delay);						// i am movinb both with time as well as with direction, since I am seeing the wave moving. 
+				var f1=Amp*Math.sin(k1*x-w11*(t+time_delay)+phaseShift+phase_delay);																			// The infinite ray is drawn an frozen every delat_t. How much did the wave move at this deltat? c=dl/dt --> dtl=c*dt
+	
+
 			// Save the wave to make the summed wave (muy importante!)
 				array_wave[i]=f1;
 
@@ -1223,28 +1257,28 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 			
 			// HOW TO DISPLAY RESULTS - SNAKES; OR FRONTS or DOTS?
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
-			
-			if(document.getElementById("markPoins").checked == '1'){	
-					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			} else if(document.getElementById("makrCurves").checked == '1'){	
-					putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
-			} else if(document.getElementById("markFields").checked == '1'){
-					ctx1.globalAlpha = 0.5;		
-					putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			} else if (document.getElementById("markFronts").checked == '1'){
-					//calculateReflectance(n1,n2,thetaRad,pol_choice) {
-					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance);
-				
-				// GHOSTS - failed attempt at just knowing where the fronts will be but ended up eating my CPU. So easier to "re-sample" my construced signal.
-				// NOT DOING THIS ANYMORE; THIS IS A NIGHTMARE. TLets use flage and global variabls instead
-				// Only every sampling/kth sample.		// MAYE
-				//	if ( (Math.floor(i-sampling/10*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
-				//		putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-				//	}
-
+			if (t-time_delay > 0 ) {		// Delay in time exists just so I can destructively interfere with the laser.
+				if(document.getElementById("markPoins").checked == '1'){	
+						putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				} else if(document.getElementById("makrCurves").checked == '1'){	
+						putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
+				} else if(document.getElementById("markFields").checked == '1'){
+						ctx1.globalAlpha = 0.5;		
+						putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				} else if (document.getElementById("markFronts").checked == '1'){
+						//calculateReflectance(n1,n2,thetaRad,pol_choice) {
+						putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance);
+					
+					// GHOSTS - failed attempt at just knowing where the fronts will be but ended up eating my CPU. So easier to "re-sample" my construced signal.
+					// NOT DOING THIS ANYMORE; THIS IS A NIGHTMARE. TLets use flage and global variabls instead
+					// Only every sampling/kth sample.		// MAYE
+					//	if ( (Math.floor(i-sampling/10*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
+					//		putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+					//	}
+				}
+				//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 			}
-			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		}
+		}	
 		
  
 	// STROKING THOSE DOTS!! - this is how canvas works.. easier on machine to prepare dots and stroke themm at once.
@@ -1266,6 +1300,36 @@ function putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1) {
 	ctx1.strokeStyle = 'purple';		
 	ctx1.lineWidth=pixelSize*DPmm/50;
 	ctx1.lineTo(xStart+mmppx,yStart+f1);			// Makes dots
+}
+
+//FRESNEL
+function getReflectance(n1,n2,thetaRad,theta2rad,fTHz) {
+		// FRESNEL FERSNEL FRESNEL's equations for non-magnetic transparent material Z=f(epsilon)
+		// This is for E field on s plane, for power it has to be.. squared
+		// IT depends on polarization on the incoming wave
+			var pol_choice=document.getElementById("range_polarisation").value;
+			if (pol_choice==0) {				// This is for E field on p plane, for power it has to be.. squared
+				var RpTOP=Math.abs(n1)*Math.cos(theta2rad) - Math.abs(n2)*Math.cos(thetaRad);
+				var RpBOT=Math.abs(n1)*Math.cos(theta2rad) + Math.abs(n2)*Math.cos(thetaRad);
+				var Rp=Math.pow(RpTOP/RpBOT,2);
+				var R=Rp;
+				var T=1-Rp;	
+				
+			} else if (pol_choice==1) {
+				var RsTOP=Math.abs(n1)*Math.cos(thetaRad) - Math.abs(n2)*Math.cos(theta2rad);
+				var RsBOT=Math.abs(n1)*Math.cos(thetaRad) + Math.abs(n2)*Math.cos(theta2rad);
+				var Rs=Math.pow(RsTOP/RsBOT,2);										
+				var R=Rs;
+				var T=1-Rs;																// E field amplitude reduced by?		
+			} else {
+				alert("I dun goffed! Something wrong with the choice of polarisation in the code");
+			}
+		
+		// IF TOTAL REFLECTION OCCURS - Ignore fresnell equations completelly; becquse infinitw
+			if (isNaN(theta2rad)) {	
+				var R=1;			
+			} 
+	return [R,T]
 }
 
 function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
@@ -1291,14 +1355,7 @@ function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance) {
 		ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
 		flag_front=1;
 		}
-		
-	// If detected on up, draw line, set global flag flag to zero
-//	if (beep>0.9 && flag==1) {
-//	ctx1.fillRect(xStart+mmppx,yStart-Amp, pixelSize, 2*Amp);			// Makes dots
-//	flag_front=0;		// don't draw until flag = 1
-//	} else if (beep<-9) {
-//	flag_front=1;
-//	}
+
 	
 	
 	
@@ -1529,8 +1586,7 @@ function sumArrays(array1,array2) {								// Sets the same size for arrays then
 	// make arrays size equal, prevent NaNs
 	
 		var size_diff=array2.length-array1.length;
-				document.getElementById("test1").innerHTML=array1.length;
-				document.getElementById("test2").innerHTML=array2.length;
+
 		for (var i=0;i<Math.abs(size_diff);i++) { 
 			if (size_diff>0) {
 				array1.push(0);
@@ -1550,23 +1606,9 @@ function sumArrays(array1,array2) {								// Sets the same size for arrays then
 			return summed; 
 		});	
 
-	// REMOVE ALL ZEROES FROM SUMED ARRAY I DON?T WANT TO SEE THEM AS LINES
-	document.getElementById("test3").innerHTML=waveRefSum;
-	//waveRefSum=removeElementFromArray(waveRefSum,0);
-	document.getElementById("test4").innerHTML=waveRefSum;	
 	return waveRefSum;
 }
 
-// REMOVES A CERTAIN ELEMENT FROM ARRAY https://stackoverflow.com/questions/5817756/delete-zero-values-from-array-with-javascript
-function removeElementFromArray(arrayName,arrayElement) {
-    for(var i=0; i<arrayName.length;i++ )
-     { 
-        if(arrayName[i]==arrayElement)
-            arrayName.splice(i,1); 
-      } 
-	  
-	  return arrayName;
- }
 
 // DRAW SUMMED ARRAYS
 function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
@@ -1678,18 +1720,20 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 			
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-			if(document.getElementById("markPoins").checked == '1' && f1 != 0){	
-				putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			} else if(document.getElementById("makrCurves").checked == '1'){	
-				putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			} else if (document.getElementById("markFronts").checked == '1'){
-					var reflectance=0.5;
-					putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance)
-			} else if(document.getElementById("markFields").checked == '1'){
-				ctx1.globalAlpha = 0;;		
-				putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-			}
+			if (f1 != 0) {		// Don't draw zerose
+				if(document.getElementById("markPoins").checked == '1'){	
+					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				} else if(document.getElementById("makrCurves").checked == '1'){
+					putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				} else if (document.getElementById("markFronts").checked == '1'){
+						var reflectance=0.5;
+						putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance)
+				} else if(document.getElementById("markFields").checked == '1'){
+					ctx1.globalAlpha = 0;;		
+					putFieldsOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+				}
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+			}
 		}
 	ctx1.stroke();
 	ctx1.globalAlpha = 1;			
@@ -2057,7 +2101,7 @@ TEST 15:<span id="test15">ready</span> <br />
 					
 					<span id="hidden_2nz2">
 						<b>Lomni količnik spodnjega medija za žarek 2:</b> <span id="value_n2z2"></span> <br>
-						<input type="range" id="range_n2z2" min="10" max="300" value="100"></br>
+						<input type="range" id="range_n2z2" min="-300" max="300" value="100"></br>
 					</span>
 					
 					
@@ -2277,9 +2321,23 @@ TEST 15:<span id="test15">ready</span> <br />
 							Increase Theta every frame by: <input type="text" id="input_theta" value="0" /> <br />
 							<input type="range" class="narrowRange" id="range_simulation" min="0" max="1" value="0"> SIMULATION </input> <br/>
 							
+							<br /><br /><br /><br /><br /><br />
 							
-							
+							<b>Pulse 1 duration</b>: <span id="value_pulse1_duration"></span> femtoseconds<br />
+							<input type="range" class="narrowRange" id="range_pulse1_duration" min="0" max="100" value="10"> </input> <br/>
 
+
+							<b>Pulse 1 Phase shift</b>: <span id="value_pulseleftphasedelay"></span> °<br />
+							<input type="range" class="narrowRange" id="range_pulseleftphasedelay" min="0" max="360" value="180"> </input> <br/>
+
+
+							<b>Pulse 2 duration</b>: <span id="value_pulse2_duration"></span> femtoseconds<br />
+							<input type="range" class="narrowRange" id="range_pulse2_duration" min="0" max="100" value="10"> </input> <br/>
+
+							<b>Prange_timeDelaySignal1</b>: <span id="value_timeDelaySignal1"></span> °<br />
+							<input type="range" class="narrowRange" id="range_timeDelaySignal1" min="0" max="10000" value="5000"> </input> <br/>
+
+							
 							
 
 			</div>
