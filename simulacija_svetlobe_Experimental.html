@@ -167,7 +167,7 @@ var fred=442.5;												// THz 10^12	red   color median frequency
 var fblue=640;												// THz 10^12	blue  color median frequency
 var ftest=299.792458;										// freqency at which wavelength is exzactly 1 micrometer and its period is 3335.640952 attoseconds		
 var Amp = 30;												// Just to make it look presentable on the canvas.
-var wave1=[ftest,  5, Amp];									
+var wave1=[ftest,  5, Amp];									// BAD CODING ON THIS PART - what does 5 stand for anyway? raylenght.. of incoming w
 
 		
 // CANVAS VARIABLES		
@@ -1066,7 +1066,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1,pulse_duration,phase_
 			var yStart=locY-raylength*DPmm*Math.sin(tilt*Math.PI/180);		
 		
 		
-		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0,1,pulse_duration,phase_delay,time_delay);
+		var arrayTopRay=drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,0,n1,0,1,pulse_duration,phase_delay,time_delay,0);
 
 
 	// -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -1105,7 +1105,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1,pulse_duration,phase_
 			
 			// ---------------REFRACTED RAY, RAY 2 ---------------
 			var pulse2_duration=0
-			var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay,T,pulse_duration,phase_delay,time_delay);
+			var arrayBottomRay=drawRay(fTHz,refracted_raylenght,Amp*Te,ctx1,xEndWave1,yEndWave1,tilt2,wave2_phase,n2,tdelay,T,pulse_duration,phase_delay,time_delay,1);
 
 		}
 	
@@ -1142,7 +1142,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1,pulse_duration,phase_
 			if (document.getElementById("range_polarisation").value==0 && theta1 == findBresterAngle(n1,n2)) {
 				var arrayReflected=new Array();											// Empty array - there is no array one under brewsters angle. This id done because otherwise it draws zeros on the plane.
 			} else  {
-				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave3_phase,n1,tdelay,R,pulse_duration,phase_delay,time_delay);
+				var arrayReflected=drawRay(fTHz,raylength,Amp*Re,ctx1,xEndWave1,yEndWave1,tilt3,wave3_phase,n1,tdelay,R,pulse_duration,phase_delay,time_delay,0);
 			}		
 
 				
@@ -1157,7 +1157,7 @@ function draw2rays(fTHz,raylength,locX,locY,Amp,n1,n2,ctx1,pulse_duration,phase_
 }
 
 // FUNCTION THAT ACTUALLYD DRAWS THE WAVES
-function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,reflectance,pulse_duration,phase_delay,time_delay) {
+function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,reflectance,pulse_duration,phase_delay,time_delay,drawBigPointAtTheEnd) {
 
 	// Defined
 		var c0=299792458										// Speed of light - meters per second OR micrometers per microsecond
@@ -1174,14 +1174,12 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 		var Amp;												// Wave Amplitude - has no meaning, just to make it nice on the canvas
 				
 	// Calculated - floating point, we got weird ass number in here!!
-		var raytime = raylength*n/c0mmpatts;					// time for wave to travel the defined length
+		var raytime = raylength*n/c0mmpatts;					// time for refracted wave to travel the defined length
 		var lambda1=calculate_wavelenght(fTHz,n);				// get vavelenght in micrometers
 		var numPeriodsToDraw=raylength/lambda1;					// depends on the length of the distance traveled
 		var w11=2*Math.PI*fTHz/Math.pow(10,6);					// Angular speed in rad/attoseconds		
 		var k1 = 2*Math.PI/lambda1;								// Wavenumber in 1/micrometers
-			
-	
-	
+
 
 
 	// ROTATE DRAWN IMAGE AROUND WHICH POINT (for the angle - theta of wave)
@@ -1192,7 +1190,7 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 	
 	// THIS SIMULATES WAVE IS APPROACHING TO THE SUFACE.  I have defeated the infinite signal (pretend it does not exist)!!
 		if (t<=Math.abs(raytime)+tdelay+time_delay)	{
-			var how_many_samples=(t-tdelay-time_delay)*sampling*c0mmpatts/Math.abs(n)			// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
+			var how_many_samples=(t-tdelay-time_delay)*sampling*c0mmpatts/Math.abs(n)			// One delay is due to te simulation of the refracted wave, one is due to the delay of ALL OF THEM// t [attosec] * sampling [samples/micrometer] * c0mmpatts / n [um/attosec]
 			var how_many_samples_from=0;
 		} else {
 			var how_many_samples=sampling*raylength;						// if 12 micrometers, then 12*sampling
@@ -1259,7 +1257,7 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
 			if (t-time_delay > 0 ) {		// Delay in time exists just so I can destructively interfere with the laser.
 				if(document.getElementById("markPoins").checked == '1'){	
-						putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+						putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1,pixelSize);
 				} else if(document.getElementById("makrCurves").checked == '1'){	
 						putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1)
 				} else if(document.getElementById("markFields").checked == '1'){
@@ -1268,16 +1266,19 @@ function drawRay(fTHz,raylength,Amp,ctx1,xStart,yStart,tilt,phaseShift,n,tdelay,
 				} else if (document.getElementById("markFronts").checked == '1'){
 						//calculateReflectance(n1,n2,thetaRad,pol_choice) {
 						putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance);
-					
-					// GHOSTS - failed attempt at just knowing where the fronts will be but ended up eating my CPU. So easier to "re-sample" my construced signal.
-					// NOT DOING THIS ANYMORE; THIS IS A NIGHTMARE. TLets use flage and global variabls instead
-					// Only every sampling/kth sample.		// MAYE
-					//	if ( (Math.floor(i-sampling/10*t/fTHz))  %  Math.floor(sampling*lambda1)==0) {		// OD KJE STRIŽE JEBENA OSEMKA
-					//		putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1);
-					//	}
 				}
-				//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 			}
+			
+			// I WANT THE LAST SAMPLE TO BE A BALL??? So WE CAN SEE WHAT WE CAN ACTUALLY SEE IN THE POSITION
+				if (i==how_many_samples && drawBigPointAtTheEnd==1) {			// LAST ONE
+					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1,30);
+				}  
+				
+				if (t <=raytime+tdelay+time_delay && drawBigPointAtTheEnd==1) {				// HAVE THE POINT JUST BE STILL before the wave arrives
+					putPointOnCanvas(xStart,yStart,raylength*DPmm,0,ctx1,30);
+				}
+			
+			
 		}	
 		
  
@@ -1332,9 +1333,9 @@ function getReflectance(n1,n2,thetaRad,theta2rad,fTHz) {
 	return [R,T]
 }
 
-function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1) {		
+function putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1,pointSize) {		
 	ctx1.fillStyle = 'purple';
-	ctx1.fillRect(xStart+mmppx,yStart+f1, pixelSize, pixelSize);			// Makes dotss
+	ctx1.fillRect(xStart+mmppx,yStart+f1, pointSize, pointSize);			// Makes dotss
 }
 
 function putFrontOnCanvas(xStart,yStart,mmppx,f1,ctx1,reflectance) {		
@@ -1664,11 +1665,11 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
 				var waveRefSum=sumArrays(wave1refracted,wave2refracted);
 				
 			// DRAW THE NEW WAVE
-			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum,ctx1)
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,waveRefSum,ctx1,1)
 			
 		} else {																		// SHOW BOTH RAYS  - if their angle is different
-			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted,ctx1)
-			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted,ctx1)				
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_1,wave1refracted,ctx1,1)
+			drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt2_2,wave2refracted,ctx1,1)				
 		}
 		
 		
@@ -1682,12 +1683,12 @@ function drawSummedRayfromArray(arrays1,arrays2,locX,locY,raylength,ctx1) {
 		var theta3rad = thetaRad-Math.PI/2;
 		var tilt3=theta3rad*180/Math.PI;			
 		
-	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum,ctx1)
+	drawRayfromArray(raylength,xEndWave1,yEndWave1,tilt3,waveReflSum,ctx1)		// THe raylenght herein question is the raylenght of the incomming wave, so I know where to start drawing.
 
 }
 
 // DRAW RAY FROM ARRAY - for the summed wave
-function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
+function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1,drawBigPointAtTheEnd) {
 	// Rotating around which point?		
 	var rotatex = xStart;												// By default the rotation is around the starting point of the wave
 	var rotatey = yStart;		
@@ -1722,7 +1723,8 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 
 			if (f1 != 0) {		// Don't draw zerose
 				if(document.getElementById("markPoins").checked == '1'){	
-					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1);
+					putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1,pixelSize);					
+					
 				} else if(document.getElementById("makrCurves").checked == '1'){
 					putLinetOnCanvas(xStart,yStart,mmppx,f1,ctx1);
 				} else if (document.getElementById("markFronts").checked == '1'){
@@ -1734,6 +1736,17 @@ function drawRayfromArray(raylength,xStart,yStart,tilt,array_wave,ctx1) {
 				}
 			//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 			}
+							
+			
+			// BIG SQUARE MEASURING POINT AT THE END
+			//if (i==array_wave.length-1 && drawBigPointAtTheEnd==1) {			// LAST ONE
+
+			var refracted_raylenght=Number(document.getElementById("range_refracted_raylenght").value)
+
+			if (Math.floor(mmppx)==refracted_raylenght*DPmm && drawBigPointAtTheEnd==1) {			// LAST ONE			
+				putPointOnCanvas(xStart,yStart,mmppx,f1,ctx1,30);
+			}
+			
 		}
 	ctx1.stroke();
 	ctx1.globalAlpha = 1;			
