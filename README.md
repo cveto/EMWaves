@@ -3,6 +3,8 @@
 
 ## Simple Electromagnetic Wave Simulator - animated
 
+Demo: https://htmlpreview.github.io/?https://github.com/cveto/EMWaves/blob/master/simulacija_svetlobe.html
+
 
 This is a one-file-only HTML/Javascript(pure)/CSS simulator of light. It is capable of simulating some simple wave propeties and calculate basic parameters.
 
